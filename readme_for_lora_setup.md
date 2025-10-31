@@ -7,29 +7,31 @@ I used a 7.8cm wire as described [here](https://learn.adafruit.com/adafruit-rfm6
 
 First, I connect a 3.3V power supply to VIO_REF on the nRF7002DK (tie GND of power supply to nRF7002DK GND) - this enables 3.3V GPIO outputs from the GPIO pins
 
-Then from the current device tree overlay I have the following for the DK:
-
-SPI MISO -> Pin 1.10 on nRF7002DK
-SPI MOSI -> Pin 1.11
-SPI SCK -> Pin 1.12
-SPI CS -> Pin 1.3
-LoRa SX1276 DIO GPIO0 -> Pin 1.13
-LoRa SX1276 DIO GPIO1 -> Pin 1.14
-LoRa SX1276 Reset -> Pin 1.15
-
 So from the RFM95 board I have:
+
 VIN -> VDD
+
 GND -> GND
+
 EN -> floating, no connection
+
 G0 -> LoRa DIO GPIO0 -> Pin 1.13
+
 SCK -> SPI SCK -> Pin 1.12
+
 MISO -> SPI MISO -> Pin 1.10
+
 MOSI -> SPI MOSI -> Pin 1.11
+
 CS -> SPI CS -> Pin 1.3
+
 RST -> LoRa SX1276 Reset -> Pin 1.15
+
 G1 -> LoRa DIO GPIO1 -> Pin 1.14
 
+
 This is the same thing just in a table
+(**JUST LOOK AT THIS TABLE**)
 | **RFM95** | **Device Tree**        | **nRF7002DK**     |
 |------------|------------------------|-------------------|
 | VIN        | —                      | VDD               |
@@ -63,14 +65,14 @@ Most likely we will still with using OTAA for now as it seems to work. I had tro
 I took the code in `main.c` (I don't think it's very different from the zephyr LoRa class A OTAA sample, there are a couple of modifications) from a sample written [here](https://github.com/fcgdam/zLorawan_Node/blob/master/src/main.c), and whoever wrote this also wrote a very helpful [blog post](https://primalcortex.wordpress.com/2020/11/17/a-zephyr-rtos-based-ttn-lorawan-node/) where I got the device tree from.
 
 Some other helpful links:
-[Wiring diagram which doesn't exactly line up with ours but it's nice](https://learn.adafruit.com/adafruit-rfm69hcw-and-rfm96-rfm95-rfm98-lora-packet-padio-breakouts/arduino-wiring)
-[Explanation of RFM95 Pins](https://learn.adafruit.com/adafruit-rfm69hcw-and-rfm96-rfm95-rfm98-lora-packet-padio-breakouts/pinouts)
-[Pin mapping of nRF7002DK](https://docs.nordicsemi.com/bundle/ug_nrf7002_dk/page/UG/nrf7002_DK/connector_if.html)
+- [Wiring diagram which doesn't exactly line up with ours but it's nice](https://learn.adafruit.com/adafruit-rfm69hcw-and-rfm96-rfm95-rfm98-lora-packet-padio-breakouts/arduino-wiring)
+- [Explanation of RFM95 Pins](https://learn.adafruit.com/adafruit-rfm69hcw-and-rfm96-rfm95-rfm98-lora-packet-padio-breakouts/pinouts)
+- [Pin mapping of nRF7002DK](https://docs.nordicsemi.com/bundle/ug_nrf7002_dk/page/UG/nrf7002_DK/connector_if.html)
 
 Links for myself
-[set datarate issue](https://github.com/zephyrproject-rtos/zephyr/issues/31551)
-[lorawan.h](https://docs.zephyrproject.org/apidoc/latest/lorawan_8h_source.html)
-[some bug report on Mlmeconfirm](https://github.com/zephyrproject-rtos/zephyr/issues/36953)
-[ttn dashboard](https://nam1.cloud.thethings.network/console/applications/ese518-iot-venture-chicken-nuggies/devices/jason-nrf7002-dk-rfm95)
-[radiolib?](https://github.com/jgromes/RadioLib)
-[unable to join network rx2 timeout](https://www.thethingsnetwork.org/forum/t/unable-to-join-network-rx-2-timeout/68603/18)
+- [set datarate issue](https://github.com/zephyrproject-rtos/zephyr/issues/31551)
+- [lorawan.h](https://docs.zephyrproject.org/apidoc/latest/lorawan_8h_source.html)
+- [some bug report on Mlmeconfirm](https://github.com/zephyrproject-rtos/zephyr/issues/36953)
+- [ttn dashboard](https://nam1.cloud.thethings.network/console/applications/ese518-iot-venture-chicken-nuggies/devices/jason-nrf7002-dk-rfm95)
+- [radiolib?](https://github.com/jgromes/RadioLib)
+- [unable to join network rx2 timeout](https://www.thethingsnetwork.org/forum/t/unable-to-join-network-rx-2-timeout/68603/18)
