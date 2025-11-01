@@ -7,6 +7,15 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/random/random.h>
 
+// FOTA includes
+#include <zephyr/storage/flash_map.h>
+#include <zephyr/dfu/mcuboot.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/sys/crc.h>
+#include <mbedtls/sha256.h>
+
+#include <zephyr/sys/reboot.h>
+
 // BUILD_ASSERT(DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_console), zephyr_cdc_acm_uart),
 //         "Console device is not ACM CDC UART device");
 
@@ -47,6 +56,72 @@ char data[] = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd'};
 
 #define LED0_NODE DT_ALIAS(led0)
 // #define LED1_NODE DT_ALIAS(led1)
+
+// for FOTA
+#define FU_PORT 200
+#define FU_MAX_CHUNK 48
+
+enum fu_state
+{
+    FU_IDLE,
+    FU_RECEIVING
+};
+static enum fu_state fu_state = FU_IDLE;
+
+static size_t fu_image_size = 0, fu_received = 0;
+static uint32_t fu_chunk_size = 0, fu_expected_chunks = 0;
+static uint32_t fu_bitmap_max = 0;
+static uint8_t *fu_bitmap = NULL; /* bit per chunk received */
+
+static mbedtls_sha256_context sha_ctx;
+static uint8_t fu_expected_sha[32];
+
+static const struct flash_area *slot1;
+static off_t slot1_off = 0;
+
+// end of stuff for FOTA
+
+// firmware update helpers
+static bool fu_bitmap_set(uint32_t idx)
+{
+    if (idx >= fu_bitmap_max)
+        return false;
+    fu_bitmap[idx >> 3] |= (1u << (idx & 7));
+    return true;
+}
+
+static bool fu_bitmap_all()
+{
+    for (uint32_t i = 0; i < (fu_bitmap_max + 7) / 8; ++i)
+        if (fu_bitmap[i] != 0xFF)
+            return false;
+    return true;
+}
+
+static int fu_open_slot1(void)
+{
+    int rc = flash_area_open(FLASH_AREA_ID(image_1), &slot1);
+    if (rc)
+        return rc;
+    slot1_off = 0;
+    return 0;
+}
+
+static void try_confirm_image(void)
+{
+    if (!boot_is_img_confirmed())
+    {
+        // self test
+        if (boot_write_img_confirmed() == 0)
+        {
+            printk("Image confirmed\n");
+        }
+        else
+        {
+            printk("Image confirm failed\n");
+        }
+    }
+}
 
 static const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
@@ -108,18 +183,111 @@ static void dl_callback(uint8_t port, uint8_t data_pending,
                         int16_t rssi, int8_t snr,
                         uint8_t len, const uint8_t *data)
 {
-    printk("\nDownlink data received: \n");
-    for (int i = 0; i < len; i++)
-        printk("%02X ", data[i]);
+    if (port != FU_PORT)
+    {
+        printk("DL on port %u (%dB)\n", port, len);
+        return;
+    }
+    if (len < 1)
+        return;
+    uint8_t cmd = data[0];
 
-    printk("\n");
-    printk("Data size: %d\n", len);
-    printk("Data Port: %d\n", port);
-    printk("RSSI:      %d\n", (int16_t)rssi);
-    printk("SNR:       %d\n", (int16_t)snr);
-    printk("Data pend: %d\n", data_pending);
+    if (cmd == 0x01) // START
+    {
+        if (len < 1 + 4 + 2 + 32)
+        {
+            printk("START too short\n");
+            return;
+        }
+        fu_image_size = (size_t)((data[1] << 24) | (data[2] << 16) | (data[3] << 8) | data[4]);
+        fu_chunk_size = (uint16_t)((data[5] << 8) | data[6]);
+        memcpy(fu_expected_sha, &data[7], 32);
 
-    printk("\n\n");
+        fu_expected_chunks = (fu_image_size + fu_chunk_size - 1) / fu_chunk_size;
+        fu_bitmap_max = fu_expected_chunks;
+        k_free(fu_bitmap);
+        fu_bitmap = k_calloc((fu_bitmap_max + 7) / 8, 1);
+        if (!fu_bitmap)
+        {
+            printk("OOM bitmap\n");
+            return;
+        }
+
+        if (fu_open_slot1())
+        {
+            printk("slot1 open fail\n");
+            return;
+        }
+        flash_area_erase(slot1, 0, fu_image_size);
+
+        mbedtls_sha256_init(&sha_ctx);
+        mbedtls_sha256_starts(&sha_ctx, 0);
+        fu_received = 0;
+        fu_state = FU_RECEIVING;
+        printk("FU START size=%u chunk=%u chunks=%u\n",
+               (unsigned)fu_image_size, fu_chunk_size, fu_expected_chunks);
+        return;
+    }
+
+    if (cmd == 0x02 /* CHUNK */ && fu_state == FU_RECEIVING)
+    {
+        if (len < 1 + 4 + 1)
+        {
+            printk("CHUNK too short\n");
+            return;
+        }
+        uint32_t idx = (data[1] << 24) | (data[2] << 16) | (data[3] << 8) | data[4];
+        const uint8_t *payload = &data[5];
+        uint16_t paylen = len - 5;
+
+        off_t offset = (off_t)idx * fu_chunk_size;
+        if (offset + paylen > fu_image_size)
+        {
+            printk("CHUNK OOB\n");
+            return;
+        }
+
+        int rc = flash_area_write(slot1, offset, payload, paylen);
+        if (rc)
+        {
+            printk("flash write err %d\n", rc);
+            return;
+        }
+
+        mbedtls_sha256_update(&sha_ctx, payload, paylen);
+        if (!fu_bitmap_set(idx))
+        {
+            printk("bitmap idx bad\n");
+            return;
+        }
+
+        fu_received += paylen;
+        return;
+    }
+
+    if (cmd == 0x03 /* END */ && fu_state == FU_RECEIVING)
+    {
+        if (!fu_bitmap_all() || fu_received != fu_image_size)
+        {
+            printk("FU missing chunks\n");
+            return;
+        }
+        uint8_t sha[32];
+        mbedtls_sha256_finish(&sha_ctx, sha);
+        if (memcmp(sha, fu_expected_sha, 32) != 0)
+        {
+            printk("FU SHA mismatch\n");
+            return;
+        }
+        printk("FU complete, requesting test swap...\n");
+
+        if (boot_request_upgrade(BOOT_UPGRADE_TEST) != 0)
+        {
+            printk("boot_request_upgrade failed\n");
+            return;
+        }
+        sys_reboot(SYS_REBOOT_COLD);
+    }
 }
 
 // ADR change callback

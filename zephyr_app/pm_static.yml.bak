@@ -1,0 +1,10 @@
+regions:
+  external_flash:
+    device: "extflash0"   # must match the DT label above
+    address: 0x00000000
+    size: 0x00800000      # example: 8 MiB; set to your chip size
+
+mcuboot_secondary:
+  region: external_flash
+  address: 0x00000000
+  size: 0x00200000        # >= mcuboot_primary size

@@ -1,0 +1,16 @@
+&spi2 {
+    status = "okay";
+    compatible = "nordic,nrf-spim";
+    cs-gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
+    pinctrl-0 = <&spi2_default>;
+    pinctrl-1 = <&spi2_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    extflash0: spi-nor@0 {
+        compatible = "jedec,spi-nor";
+        reg = <0>;
+        label = "extflash0";   /* <-- same label */
+        spi-max-frequency = <8000000>;
+        status = "okay";
+    };
+};

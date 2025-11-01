@@ -1,53 +1,88 @@
+/* ---------- LoRa on SPI1 ---------- */
 &spi1 {
-  status = "okay";
-  compatible = "nordic,nrf-spim";
-  cs-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
+	status = "okay";
+	compatible = "nordic,nrf-spim";
+	cs-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
 
-  pinctrl-0 = <&spi1_default>;
-  pinctrl-1 = <&spi1_sleep>;
-  pinctrl-names = "default", "sleep";
-  lora: sx1276@0 {
-    compatible = "semtech,sx1276";
-    reg = <0>;
-    label = "sx1276";
-    reset-gpios = <&gpio1 15 GPIO_ACTIVE_LOW>;
-    dio-gpios = <&gpio1 13 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
-      <&gpio1 14 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
-      spi-max-frequency = <1000000>;
-      power-amplifier-output = "pa-boost";
-  };
+	pinctrl-0 = <&spi1_default>;
+	pinctrl-1 = <&spi1_sleep>;
+	pinctrl-names = "default", "sleep";
+
+	lora: sx1276@0 {
+		compatible = "semtech,sx1276";
+		reg = <0>;
+		label = "sx1276";
+		reset-gpios = <&gpio1 15 GPIO_ACTIVE_LOW>;
+		dio-gpios = <&gpio1 13 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+			    <&gpio1 14 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+		spi-max-frequency = <1000000>;
+		power-amplifier-output = "pa-boost";
+	};
 };
 
+/* ---------- Root: alias + code-partition ---------- */
+ / {
+	aliases { lora0 = &lora; };
+
+	/* Tell PM/MCUboot that the app's primary is slot0 in internal flash */
+	chosen {
+		zephyr,code-partition = &slot0_partition;
+	};
+};
+
+/* ---------- External SPI-NOR on SPI2 (slot1 lives here) ----------
+ * nRF7002 DK SPI2 pins:
+ *   CS=P0.11, SCLK=P0.08, MOSI=P0.09, MISO=P0.10
+ */
+/* ---------- External SPI-NOR on SPI2 (no DT partitions here) ---------- */
+&spi2 {
+    status = "okay";
+    compatible = "nordic,nrf-spim";
+    cs-gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
+    pinctrl-0 = <&spi2_default>;
+    pinctrl-1 = <&spi2_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    extflash0: spi-nor@0 {
+        compatible = "jedec,spi-nor";
+        reg = <0>;
+        label = "extflash0";   /* <-- add this */
+        spi-max-frequency = <8000000>;
+        status = "okay";
+    };
+};
+
+/* ---------- Pin control groups ---------- */
 &pinctrl {
 /omit-if-no-ref/ spi1_default: spi1_default {
-  group1 {
-    psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
-      <NRF_PSEL(SPIM_MOSI, 1, 11)>,
-        <NRF_PSEL(SPIM_MISO, 1, 10)>;
-  };
+	group1 {
+		psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+			<NRF_PSEL(SPIM_MOSI, 1, 11)>,
+			<NRF_PSEL(SPIM_MISO, 1, 10)>;
+	};
 };
-
 /omit-if-no-ref/ spi1_sleep: spi1_sleep {
-  group1 {
-    psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
-      <NRF_PSEL(SPIM_MOSI, 1, 11)>,
-        <NRF_PSEL(SPIM_MISO, 1, 10)>;
-        low-power-enable;
-  };
-};
-};
-
-/ {
-  aliases {
-    lora0 = &lora;
-  };
+	group1 {
+		psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+			<NRF_PSEL(SPIM_MOSI, 1, 11)>,
+			<NRF_PSEL(SPIM_MISO, 1, 10)>;
+		low-power-enable;
+	};
 };
 
-// May be needed for ns version of app to run correctly without kernel panic on launch
-// EDIT: Seems to have resolved itself without disabling in DT by adding CONFIG_TFM_SECURE_UART0 to prj.conf
-// see https://docs.nordicsemi.com/bundle/ncs-latest/page/nrf/security/tfm/tfm_logging.html#configuring_logging_to_the_same_uart_as_the_application
-/*
-&uart1 {
-  status = "disabled";
+/omit-if-no-ref/ spi2_default: spi2_default {
+	group1 {
+		psels = <NRF_PSEL(SPIM_SCK, 0, 8)>,   /* SCLK P0.08 */
+			<NRF_PSEL(SPIM_MOSI, 0, 9)>,  /* MOSI P0.09 */
+			<NRF_PSEL(SPIM_MISO, 0, 10)>; /* MISO P0.10 */
+	};
 };
-*/
+/omit-if-no-ref/ spi2_sleep: spi2_sleep {
+	group1 {
+		psels = <NRF_PSEL(SPIM_SCK, 0, 8)>,
+			<NRF_PSEL(SPIM_MOSI, 0, 9)>,
+			<NRF_PSEL(SPIM_MISO, 0, 10)>;
+		low-power-enable;
+	};
+};
+};
