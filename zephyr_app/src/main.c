@@ -25,6 +25,7 @@ static uint32_t tx_counter = 1; // start at 1
 
 /* size of stack area used by each thread */
 #define STACKSIZE 1024
+#define LORAWAN_STACKSIZE 8192
 
 /* scheduling priority used by each thread */
 #define PRIORITY 7
@@ -124,7 +125,7 @@ static void dl_callback(uint8_t port, uint8_t data_pending,
 }
 
 // ADR change callback
-static void lorwan_datarate_changed(enum lorawan_datarate dr)
+static void lorawan_dtarate_changed(enum lorawan_datarate dr)
 {
     uint8_t unused, max_size;
 
@@ -135,7 +136,7 @@ static void lorwan_datarate_changed(enum lorawan_datarate dr)
 /* Main program.
  */
 
-int main(void)
+static void lorawan_handler(void)
 {
     const struct device *lora_dev;
     struct lorawan_join_config join_cfg;
@@ -155,7 +156,7 @@ int main(void)
     if (!device_is_ready(lora_dev))
     {
         LOG_ERR("%s: device not ready.", lora_dev->name);
-        return 0;
+        return;
     }
     LOG_INF("Starting Lorawan stack...");
 
@@ -165,7 +166,7 @@ int main(void)
     if (ret < 0)
     {
         LOG_ERR("lorawan_set_region failed: %d", ret);
-        return 0;
+        return;
     }
 #endif
 
@@ -174,7 +175,7 @@ int main(void)
     if (ret < 0)
     {
         LOG_ERR("lorawan_start failed: %d", ret);
-        return 0;
+        return;
     }
 
     // Enable callbacks
@@ -183,7 +184,7 @@ int main(void)
         .cb = dl_callback};
 
     lorawan_register_downlink_callback(&downlink_cb);
-    lorawan_register_dr_changed_callback(lorwan_datarate_changed);
+    lorawan_register_dr_changed_callback(lorawan_dtarate_changed);
 
     uint32_t random = sys_rand32_get();
 
@@ -264,11 +265,11 @@ int main(void)
         k_sleep(DELAY);
     }
 
-    return 0;
+    return;
 }
 
-// Task for handling blinking leds.
+// LED Blinking Handler Task
 K_THREAD_DEFINE(blink0_id, STACKSIZE, blink0, NULL, NULL, NULL, PRIORITY, 0, 0); // Main Green LED
 
-// Lorawan handling task to join the TTN network
-// K_THREAD_DEFINE(lorawan_task_id, STACKSIZE, lorawan_task, NULL, NULL, NULL, PRIORITY, 0, 0);
+// LoRaWAN Handler Task
+K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, PRIORITY, 0, 0);
