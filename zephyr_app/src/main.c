@@ -3,17 +3,17 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/random/random.h>
-
 #include <stdio.h>
-
-#define DEFAULT_RADIO_NODE DT_ALIAS(lora0)
-#define LED0_NODE DT_ALIAS(led0)
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(lorawan_node);
 
+#define DEFAULT_RADIO_NODE DT_ALIAS(lora0)
+#define LED0_NODE DT_ALIAS(led0)
+
 /* Customize based on network configuration */
+// Rohan's keys
 // #define LORAWAN_DEV_EUI {0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x07, 0x3C, 0x04}
 // #define LORAWAN_JOIN_EUI {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 // #define LORAWAN_APP_KEY {0x64, 0x5A, 0xD1, 0x33, 0xEE, 0x12, 0x30, 0x2E, 0x67, 0x59, 0x9E, 0xBA, 0xC6, 0x78, 0xD0, 0x0E}
@@ -121,12 +121,11 @@ static void dl_callback(uint8_t port, uint8_t data_pending,
     for (int i = 0; i < len; i++)
         LOG_INF("%02X ", data[i]);
 
-    LOG_INF("");
-    LOG_INF("Data size: %d", len);
-    LOG_INF("Data Port: %d", port);
-    LOG_INF("RSSI:      %d", (int16_t)rssi);
-    LOG_INF("SNR:       %d", (int16_t)snr);
-    LOG_INF("Data pend: %d", data_pending);
+    LOG_INF("Downlink Data size: %d", len);
+    LOG_INF("Downlink Data Port: %d", port);
+    LOG_INF("Downlink RSSI:      %d", (int16_t)rssi);
+    LOG_INF("Downlink SNR:       %d", (int16_t)snr);
+    LOG_INF("Downlink Data pend: %d", data_pending);
 }
 
 // ADR change callback
@@ -248,10 +247,10 @@ static void lorawan_handler(void)
         int ret = 0;
         for (int tries = 0; tries < 1; ++tries)
         {
-            ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_UNCONFIRMED);
+            ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_CONFIRMED);
             if (ret == -EAGAIN)
             {
-                (void)lorawan_send(0, NULL, 0, LORAWAN_MSG_UNCONFIRMED); // MAC-only uplink to flush
+                (void)lorawan_send(0, NULL, 0, LORAWAN_MSG_CONFIRMED); // MAC-only uplink to flush
                 k_sleep(K_SECONDS(2));
                 continue;
             }
@@ -266,7 +265,8 @@ static void lorawan_handler(void)
         }
 
         LOG_INF("Data sent!");
-        LOG_INF("Sent: \"%s\" (len=%u)\n\n", data_buf, len);
+        LOG_INF("Sent: \"%s\" (len=%u)", data_buf, len);
+        LOG_INF("");
         k_sleep(DELAY);
     }
 
