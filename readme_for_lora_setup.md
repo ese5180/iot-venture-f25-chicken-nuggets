@@ -64,6 +64,14 @@ Most likely we will still with using OTAA for now as it seems to work. I had tro
 
 I took the code in `main.c` (I don't think it's very different from the zephyr LoRa class A OTAA sample, there are a couple of modifications) from a sample written [here](https://github.com/fcgdam/zLorawan_Node/blob/master/src/main.c), and whoever wrote this also wrote a very helpful [blog post](https://primalcortex.wordpress.com/2020/11/17/a-zephyr-rtos-based-ttn-lorawan-node/) where I got the device tree from.
 
+###### 4. Build Config
+Add one of these flags to build configuration:
+```
+-DEXTRA_CFLAGS="-DKEY_JASON=1"
+-DEXTRA_CFLAGS="-DKEY_ROHAN=1"
+-DEXTRA_CFLAGS="-DKEY_NANDINI=1"
+```
+
 Some other helpful links:
 - [Wiring diagram which doesn't exactly line up with ours but it's nice](https://learn.adafruit.com/adafruit-rfm69hcw-and-rfm96-rfm95-rfm98-lora-packet-padio-breakouts/arduino-wiring)
 - [Explanation of RFM95 Pins](https://learn.adafruit.com/adafruit-rfm69hcw-and-rfm96-rfm95-rfm98-lora-packet-padio-breakouts/pinouts)
