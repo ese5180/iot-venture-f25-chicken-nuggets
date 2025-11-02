@@ -1,49 +1,46 @@
-/* boards/nrf7002dk_nrf5340_cpuapp_ns.overlay */
-
-/* Pin control for SPIM1 on P0.08/0.09/0.10 */
-&pinctrl {
-    spi1_default: spi1_default {
-        group1 {
-            psels = <NRF_PSEL(SPIM_SCK, 0, 8)>,
-                    <NRF_PSEL(SPIM_MOSI, 0, 9)>,
-                    <NRF_PSEL(SPIM_MISO, 0, 10)>;
-        };
-    };
-    spi1_sleep: spi1_sleep {
-        group1 {
-            psels = <NRF_PSEL(SPIM_SCK, 0, 8)>,
-                    <NRF_PSEL(SPIM_MOSI, 0, 9)>,
-                    <NRF_PSEL(SPIM_MISO, 0, 10)>;
-            low-power-enable;
-        };
-    };
-};
-
 &spi1 {
-    status = "okay";
-    compatible = "nordic,nrf-spim";
-    pinctrl-0 = <&spi1_default>;
-    pinctrl-1 = <&spi1_sleep>;
-    pinctrl-names = "default", "sleep";
+  status = "okay";
+  compatible = "nordic,nrf-spim";
+  cs-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;
 
-    /* Chip select on P1.10 (Arduino D8) */
-    cs-gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
-
-    lora: sx1276@0 {
-        compatible = "semtech,sx1276";
-        reg = <0>;
-        label = "sx1276";
-        spi-max-frequency = <8000000>;
-        power-amplifier-output = "pa-boost";
-
-        /* RFM9x control pins */
-        reset-gpios = <&gpio1 3 GPIO_ACTIVE_LOW>;   /* P1.03 -> RST */
-        dio-gpios   = <&gpio0 26 GPIO_ACTIVE_HIGH>; /* P0.26 -> DIO0/IRQ */
-    };
+  pinctrl-0 = <&spi1_default>;
+  pinctrl-1 = <&spi1_sleep>;
+  pinctrl-names = "default", "sleep";
+  lora: sx1276@0 {
+    compatible = "semtech,sx1276";
+    reg = <0>;
+    label = "sx1276";
+    reset-gpios = <&gpio1 15 GPIO_ACTIVE_LOW>;
+    dio-gpios = <&gpio1 13 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+      <&gpio1 14 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+      spi-max-frequency = <1000000>;
+      power-amplifier-output = "pa-boost";
+  };
 };
 
-&{/aliases} {
+&pinctrl {
+/omit-if-no-ref/ spi1_default: spi1_default {
+  group1 {
+    psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+      <NRF_PSEL(SPIM_MOSI, 1, 11)>,
+        <NRF_PSEL(SPIM_MISO, 1, 10)>;
+  };
+};
+
+/omit-if-no-ref/ spi1_sleep: spi1_sleep {
+  group1 {
+    psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+      <NRF_PSEL(SPIM_MOSI, 1, 11)>,
+        <NRF_PSEL(SPIM_MISO, 1, 10)>;
+        low-power-enable;
+  };
+};
+};
+
+/ {
+  aliases {
     lora0 = &lora;
+  };
 };
 
 // May be needed for ns version of app to run correctly without kernel panic on launch
