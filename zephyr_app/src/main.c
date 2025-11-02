@@ -1,6 +1,3 @@
-#define OTAA
-// #define ABP
-
 #include <zephyr/lorawan/lorawan.h>
 #include <zephyr/usb/usb_device.h>
 #include <zephyr/drivers/uart.h>
@@ -9,33 +6,17 @@
 
 #include <stdio.h>
 
-// BUILD_ASSERT(DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_console), zephyr_cdc_acm_uart),
-//         "Console device is not ACM CDC UART device");
-
 #define DEFAULT_RADIO_NODE DT_ALIAS(lora0)
-// BUILD_ASSERT(DT_NODE_HAS_STATUS(DEFAULT_RADIO_NODE, okay), "No default LoRa radio specified in DT");
-// #define DEFAULT_RADIO DT_LABEL(DEFAULT_RADIO_NODE)
+#define LED0_NODE DT_ALIAS(led0)
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(lorawan_node);
 
 /* Customize based on network configuration */
-// OTAA
-#ifdef OTAA
 #define LORAWAN_DEV_EUI {0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x07, 0x3C, 0x04}
 #define LORAWAN_JOIN_EUI {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 #define LORAWAN_APP_KEY {0x64, 0x5A, 0xD1, 0x33, 0xEE, 0x12, 0x30, 0x2E, 0x67, 0x59, 0x9E, 0xBA, 0xC6, 0x78, 0xD0, 0x0E}
-#endif
-
-// ABP
-#ifdef ABP
-#define LORAWAN_DEV_ADDR {0x26, 0x0C, 0x67, 0xDB}
-#define LORAWAN_DEV_EUI {0x70, 0xB3, 0xD5, 0x7E, 0xD0, 0x07, 0x3B, 0xB4}
-#define LORAWAN_NWK_SKEY {0xA2, 0xB0, 0xCD, 0x03, 0xB0, 0x43, 0x4F, 0x3B, 0xD2, 0xA0, 0xCD, 0xC1, 0x98, 0xBB, 0xEA, 0x02}
-#define LORAWAN_APP_SKEY {0x68, 0x8E, 0x96, 0x71, 0x12, 0x0F, 0x98, 0xED, 0x94, 0x71, 0x4A, 0x7F, 0x08, 0x57, 0xDE, 0x29}
-#define LORAWAN_APP_EUI {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
-#endif
 
 #define DELAY K_MSEC(500) // Delay between sends, 500 ms
 
@@ -47,9 +28,6 @@ static uint32_t tx_counter = 1; // start at 1
 
 /* scheduling priority used by each thread */
 #define PRIORITY 7
-
-#define LED0_NODE DT_ALIAS(led0)
-// #define LED1_NODE DT_ALIAS(led1)
 
 static const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
@@ -129,24 +107,20 @@ void blink0(void)
     blink(&led0, &mainled_rate, 0);
 }
 
-// Call back functions:
-// Downlink callback
 static void dl_callback(uint8_t port, uint8_t data_pending,
                         int16_t rssi, int8_t snr,
                         uint8_t len, const uint8_t *data)
 {
-    printk("\nDownlink data received: \n");
+    LOG_INF("Downlink data received: ");
     for (int i = 0; i < len; i++)
-        printk("%02X ", data[i]);
+        LOG_INF("%02X ", data[i]);
 
-    printk("\n");
-    printk("Data size: %d\n", len);
-    printk("Data Port: %d\n", port);
-    printk("RSSI:      %d\n", (int16_t)rssi);
-    printk("SNR:       %d\n", (int16_t)snr);
-    printk("Data pend: %d\n", data_pending);
-
-    printk("\n\n");
+    LOG_INF("");
+    LOG_INF("Data size: %d", len);
+    LOG_INF("Data Port: %d", port);
+    LOG_INF("RSSI:      %d", (int16_t)rssi);
+    LOG_INF("SNR:       %d", (int16_t)snr);
+    LOG_INF("Data pend: %d", data_pending);
 }
 
 // ADR change callback
@@ -165,26 +139,17 @@ int main(void)
 {
     const struct device *lora_dev;
     struct lorawan_join_config join_cfg;
-#ifdef OTAA
+    int ret;
+    
+    // Using OTAA
     uint8_t dev_eui[] = LORAWAN_DEV_EUI;
     uint8_t join_eui[] = LORAWAN_JOIN_EUI;
     uint8_t app_key[] = LORAWAN_APP_KEY;
-#endif
-
-#ifdef ABP
-    uint8_t dev_eui[] = LORAWAN_DEV_EUI;
-    uint8_t dev_addr[] = LORAWAN_DEV_ADDR;
-    uint8_t nwk_skey[] = LORAWAN_NWK_SKEY;
-    uint8_t app_skey[] = LORAWAN_APP_SKEY;
-    uint8_t app_eui[] = LORAWAN_APP_EUI;
-#endif
-    int ret;
-
-    // Give time connect to USB.
+    
     k_msleep(2500);
     mainled_rate = 500; // Change led blinking rate to signal main program start.
 
-    printk("Starting up Lora node...\n\n");
+    LOG_INF("Starting up Lora node...");
 
     lora_dev = DEVICE_DT_GET(DEFAULT_RADIO_NODE);
     if (!device_is_ready(lora_dev))
@@ -192,24 +157,25 @@ int main(void)
         LOG_ERR("%s: device not ready.", lora_dev->name);
         return 0;
     }
-    printk("Starting Lorawan stack...\n");
+    LOG_INF("Starting Lorawan stack...");
 
-    LOG_INF("after lorawan set region");
-    /* Select region + subband and enable ADR BEFORE starting the stack */
-    lorawan_set_region(LORAWAN_REGION_US915);
+#if defined(CONFIG_LORAMAC_REGION_US915)
+    ret = lorawan_set_region(LORAWAN_REGION_US915);
+    LOG_INF("Region set to US915");
+    if (ret < 0)
+    {
+        LOG_ERR("lorawan_set_region failed: %d", ret);
+        return 0;
+    }
+#endif
 
-    /* Let the network raise the DR (bigger payload, faster links) */
     lorawan_enable_adr(true);
-
     ret = lorawan_start();
     if (ret < 0)
     {
-        printk("lorawan_start failed: %d\n\n", ret);
+        LOG_ERR("lorawan_start failed: %d", ret);
         return 0;
     }
-
-    // Enable ADR
-    // lorawan_enable_adr( false );
 
     // Enable callbacks
     struct lorawan_downlink_cb downlink_cb = {
@@ -223,30 +189,15 @@ int main(void)
 
     uint16_t dev_nonce = random & 0x0000FFFF;
 
-#ifdef OTAA
+    // Using OTAA
     join_cfg.mode = LORAWAN_ACT_OTAA;
     join_cfg.dev_eui = dev_eui;
     join_cfg.otaa.join_eui = join_eui;
     join_cfg.otaa.app_key = app_key;
     join_cfg.otaa.nwk_key = app_key;
     join_cfg.otaa.dev_nonce = dev_nonce;
-#endif
 
-#ifdef ABP
-    join_cfg.mode = LORAWAN_ACT_ABP;
-    join_cfg.dev_eui = dev_eui;
-    join_cfg.abp.dev_addr = dev_addr;
-    join_cfg.abp.app_skey = app_skey;
-    join_cfg.abp.nwk_skey = nwk_skey;
-    join_cfg.abp.app_eui = app_eui;
-#endif
-
-    printk("Joining TTN network over");
-#ifdef OTAA
-    printk(" OTAA\n\n\n");
-#else
-    printk(" ABP\n\n\n");
-#endif
+    LOG_INF("Joining TTN network over OTAA");
 
     int err = set_us915_subband(2); /* e.g., subband 2 (channels 8..15) */
     if (err)
@@ -260,22 +211,18 @@ int main(void)
         ret = lorawan_join(&join_cfg);
         if (ret < 0)
         {
-            LOG_ERR("lorawan_join_network failed: %d\n\n", ret);
+            LOG_ERR("lorawan_join_network failed: %d", ret);
             mainled_rate = 100; // Flash the led very rapidly to signal failure.
-            LOG_INF("Sleeping for 10s to try again to join network.\n\n");
-            k_sleep(K_MSEC(10000));
+            LOG_INF("Sleeping for 5s to try again to join network.");
+            k_sleep(K_MSEC(5000));
             mainled_rate = 0;
-        }
-        else
-        {
-            LOG_INF("Lorawan join succeeded");
         }
     } while (ret < 0);
 
-    printk("Sending data...\n\n");
-
     lorawan_enable_adr(false);          // stop the network from holding you at DR_0
     lorawan_set_datarate(LORAWAN_DR_4); // US915 DR_4
+    LOG_INF("Lorawan join succeeded");
+    LOG_INF("Starting to send data");
 
     while (1)
     {
@@ -313,39 +260,15 @@ int main(void)
         }
 
         LOG_INF("Data sent!");
-        printk("Sent: \"%s\" (len=%u)\n\n", data_buf, len);
+        LOG_INF("Sent: \"%s\" (len=%u)\n\n", data_buf, len);
         k_sleep(DELAY);
     }
 
     return 0;
 }
 
-/*
-void console_init(void) {
-    const struct device *dev = DEVICE_DT_GET(DT_CHOSEN(zephyr_console));
-    uint32_t dtr = 0;
-
-    if (usb_enable(NULL)) {
-        return;
-    }
-
-    while (!dtr) {
-        uart_line_ctrl_get(dev, UART_LINE_CTRL_DTR, &dtr);
-        k_msleep(250);          // Let other tasks to run if no terminal is connected to USB
-    }
-
-    while ( 1 ) {
-        k_msleep(200000);
-        //printk("Ola mundo!\n");
-    }
-}
-*/
-
 // Task for handling blinking leds.
 K_THREAD_DEFINE(blink0_id, STACKSIZE, blink0, NULL, NULL, NULL, PRIORITY, 0, 0); // Main Green LED
-
-// Task for starting up the USB console
-// K_THREAD_DEFINE(console_id, STACKSIZE, console_init, NULL, NULL, NULL, PRIORITY-2, 0, 0);
 
 // Lorawan handling task to join the TTN network
 // K_THREAD_DEFINE(lorawan_task_id, STACKSIZE, lorawan_task, NULL, NULL, NULL, PRIORITY, 0, 0);
