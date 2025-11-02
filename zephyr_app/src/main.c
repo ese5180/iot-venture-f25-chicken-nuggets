@@ -7,6 +7,8 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/random/random.h>
 
+#include <stdio.h>
+
 // BUILD_ASSERT(DT_NODE_HAS_COMPAT(DT_CHOSEN(zephyr_console), zephyr_cdc_acm_uart),
 //         "Console device is not ACM CDC UART device");
 
@@ -35,9 +37,10 @@ LOG_MODULE_REGISTER(lorawan_node);
 #define LORAWAN_APP_EUI {0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}
 #endif
 
-#define DELAY K_MSEC(4000)
+#define DELAY K_MSEC(500) // Delay between sends, 500 ms
 
-char data[] = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd'};
+static char data_buf[32];
+static uint32_t tx_counter = 1; // start at 1
 
 /* size of stack area used by each thread */
 #define STACKSIZE 1024
@@ -51,6 +54,30 @@ char data[] = {'h', 'e', 'l', 'l', 'o', 'w', 'o', 'r', 'l', 'd'};
 static const struct gpio_dt_spec led0 = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
 
 uint32_t mainled_rate = 150;
+
+static int set_us915_subband(uint8_t subband /* 1..8 */)
+{
+    if (subband < 1 || subband > 8)
+    {
+        return -EINVAL;
+    }
+
+    /* LoRaMac US915 uses 6x 16-bit words for the channels mask in Zephyr */
+    uint16_t mask[LORAWAN_CHANNELS_MASK_SIZE_US915] = {0};
+
+    /* 125 kHz channels 0..63 live in mask[0..3] (16 per word).
+       Each subband is 8 channels, i.e., half a 16-bit word. */
+    uint8_t sb = subband - 1;
+    uint8_t word = sb / 2; /* which 16-ch block (0..3) */
+    bool upper_half = (sb % 2) == 1;
+    mask[word] = upper_half ? 0xFF00 : 0x00FF;
+
+    /* 500 kHz channels 64..71 live in mask[4] (bits 0..7) */
+    mask[4] = BIT(sb);
+
+    /* mask[5] remains 0 for US915 */
+    return lorawan_set_channels_mask(mask, ARRAY_SIZE(mask));
+}
 
 void blink(const struct gpio_dt_spec *led, uint32_t *sleep_ms, uint32_t id)
 {
@@ -167,16 +194,6 @@ int main(void)
     }
     printk("Starting Lorawan stack...\n");
 
-#if defined(CONFIG_LORAMAC_REGION_US915)
-    ret = lorawan_set_region(LORAWAN_REGION_US915);
-    LOG_INF("Region set to US915");
-    if (ret < 0)
-    {
-        LOG_ERR("lorawan_set_region failed: %d", ret);
-        return 0;
-    }
-#endif
-
     LOG_INF("after lorawan set region");
     /* Select region + subband and enable ADR BEFORE starting the stack */
     lorawan_set_region(LORAWAN_REGION_US915);
@@ -231,6 +248,12 @@ int main(void)
     printk(" ABP\n\n\n");
 #endif
 
+    int err = set_us915_subband(2); /* e.g., subband 2 (channels 8..15) */
+    if (err)
+    {
+        printk("subband set failed: %d\n", err);
+    }
+
     // Loop until we connect
     do
     {
@@ -251,38 +274,46 @@ int main(void)
 
     printk("Sending data...\n\n");
 
-    // TODO: might have to change data rate to send larger packets
-    // lorawan_set_datarate(LORAWAN_DR_5);
+    lorawan_enable_adr(false);          // stop the network from holding you at DR_0
+    lorawan_set_datarate(LORAWAN_DR_4); // US915 DR_4
 
     while (1)
     {
         const uint8_t port = 2;
-        uint8_t len = sizeof(data) - 1;
-        int ret = lorawan_send(port, data, len, LORAWAN_MSG_UNCONFIRMED);
+
+        // Build "helloworld <n>" into data_buf
+        uint8_t len = (uint8_t)snprintf(
+            data_buf, sizeof(data_buf),
+            "helloworld %lu", (unsigned long)tx_counter++);
+
+        if (len >= sizeof(data_buf))
+        {
+            len = sizeof(data_buf) - 1;
+        }
+
+        // Try to send; if MAC cmds make it too tight, flush once and retry
+        int ret = 0;
+        for (int tries = 0; tries < 1; ++tries)
+        {
+            ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_UNCONFIRMED);
+            if (ret == -EAGAIN)
+            {
+                (void)lorawan_send(0, NULL, 0, LORAWAN_MSG_UNCONFIRMED); // MAC-only uplink to flush
+                k_sleep(K_SECONDS(2));
+                continue;
+            }
+            break;
+        }
+
         if (ret < 0)
         {
             LOG_ERR("lorawan_send failed: %d", ret);
-        }
-        else
-        {
-            LOG_INF("Data sent!");
-        }
-
-        if (ret == -EAGAIN)
-        {
-            LOG_ERR("lorawan_send failed: %d. Continuing...", ret);
             k_sleep(DELAY);
             continue;
         }
 
-        if (ret < 0)
-        {
-            LOG_ERR("lorawan_send failed: %d", ret);
-            k_sleep(DELAY);
-            continue;
-        }
-
-        printk("Data sent!\n\n");
+        LOG_INF("Data sent!");
+        printk("Sent: \"%s\" (len=%u)\n\n", data_buf, len);
         k_sleep(DELAY);
     }
 
