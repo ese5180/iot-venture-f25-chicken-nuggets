@@ -289,3 +289,9 @@ K_THREAD_DEFINE(blink0_id, STACKSIZE, blink0, NULL, NULL, NULL, PRIORITY, 0, 0);
 
 // LoRaWAN Handler Task
 K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, PRIORITY, 0, 0);
+
+int main(void)
+{
+    LOG_INF("IoT Venture F25 Chicken Nuggets LoRaWAN Node");
+    return 0;
+}
