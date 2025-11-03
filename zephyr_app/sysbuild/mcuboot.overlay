@@ -6,3 +6,14 @@
 		mcuboot-led0 = &led1;
   };
 };
+
+/* STEP 2.2 - Add external flash to MCUboot */
+&mx25r64 {
+	status = "okay";
+};
+
+/ {
+	chosen {
+		nordic,pm-ext-flash = &mx25r64;
+	};
+};
