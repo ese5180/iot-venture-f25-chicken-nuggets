@@ -258,10 +258,10 @@ static void lorawan_handler(void)
         int ret = 0;
         for (int tries = 0; tries < 1; ++tries)
         {
-            ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_CONFIRMED);
+            ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_UNCONFIRMED);
             if (ret == -EAGAIN)
             {
-                (void)lorawan_send(0, NULL, 0, LORAWAN_MSG_CONFIRMED); // MAC-only uplink to flush
+                (void)lorawan_send(0, NULL, 0, LORAWAN_MSG_UNCONFIRMED); // MAC-only uplink to flush
                 k_sleep(K_SECONDS(2));
                 continue;
             }
