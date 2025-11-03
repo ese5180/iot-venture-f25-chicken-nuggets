@@ -34,7 +34,7 @@ LOG_MODULE_REGISTER(lorawan_node);
 #define LORAWAN_APP_KEY {0x62, 0x04, 0xBA, 0xC1, 0x07, 0x27, 0x93, 0xE6, 0x73, 0xFD, 0x11, 0xB8, 0x93, 0xA7, 0x31, 0x69}
 #endif
 
-#define DELAY K_MSEC(500) // Delay between sends, 500 ms
+#define DELAY K_MSEC(5000) // Delay between sends, 5000 ms
 
 static char data_buf[32];
 static uint32_t tx_counter = 1; // start at 1
@@ -156,12 +156,12 @@ static void lorawan_handler(void)
     const struct device *lora_dev;
     struct lorawan_join_config join_cfg;
     int ret;
-    
+
     // Using OTAA
     uint8_t dev_eui[] = LORAWAN_DEV_EUI;
     uint8_t join_eui[] = LORAWAN_JOIN_EUI;
     uint8_t app_key[] = LORAWAN_APP_KEY;
-    
+
     k_msleep(2500);
     mainled_rate = 500; // Change led blinking rate to signal main program start.
 
@@ -289,4 +289,3 @@ K_THREAD_DEFINE(blink0_id, STACKSIZE, blink0, NULL, NULL, NULL, PRIORITY, 0, 0);
 
 // LoRaWAN Handler Task
 K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, PRIORITY, 0, 0);
-
