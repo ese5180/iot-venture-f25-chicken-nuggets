@@ -34,7 +34,7 @@ LOG_MODULE_REGISTER(lorawan_node);
 #define LORAWAN_APP_KEY {0x62, 0x04, 0xBA, 0xC1, 0x07, 0x27, 0x93, 0xE6, 0x73, 0xFD, 0x11, 0xB8, 0x93, 0xA7, 0x31, 0x69}
 #endif
 
-#define DELAY K_MSEC(5000) // Delay between sends, 5000 ms
+#define DELAY K_MSEC(4000) // Delay between sends, 4000 ms
 
 static char data_buf[32];
 static uint32_t tx_counter = 1; // start at 1
