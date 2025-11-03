@@ -42,12 +42,26 @@
     lora0 = &lora;
   };
 };
+/*
+/ {
+    chosen {
+        zephyr,uart-mcumgr = &uart0;
+    };
+};
 
+&uart0 {
+    current-speed = <115200>;
+    status = "okay";
+};
+*/
 // May be needed for ns version of app to run correctly without kernel panic on launch
 // EDIT: Seems to have resolved itself without disabling in DT by adding CONFIG_TFM_SECURE_UART0 to prj.conf
 // see https://docs.nordicsemi.com/bundle/ncs-latest/page/nrf/security/tfm/tfm_logging.html#configuring_logging_to_the_same_uart_as_the_application
 /*
 &uart1 {
   status = "disabled";
+};
+&mx25r64 {
+    status = "okay";
 };
 */
