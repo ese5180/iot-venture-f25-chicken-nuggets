@@ -1,0 +1,24 @@
+manifest:
+  remotes:
+    - name: nrf-connect-sdk
+      url-base: https://github.com/nrfconnect
+    # Add the Memfault GitHub repo
+    - name: memfault
+      url-base: https://github.com/memfault
+
+  projects:
+    - name: sdk-nrf
+      remote: nrf-connect-sdk
+      path: nrf
+      revision: v3.1.1
+      import: true
+
+    # Explicitly add the Memfault SDK, to override the version in the sdk-nrf manifest
+    - name: memfault-firmware-sdk
+      path: modules/lib/memfault-firmware-sdk
+      revision: 1.30.3
+      remote: memfault
+
+  self:
+    path: .
+
