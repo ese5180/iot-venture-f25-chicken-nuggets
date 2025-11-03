@@ -8,11 +8,11 @@
 
 | Team Member Name | Email Address           |
 | ---------------- | ----------------------- |
-| Rohan Panday     | rpanday@seas.upenn.edu  |
-| Jason Li         | jasonsli@seas.upenn.edu |
-| Nandini Swami    | snandini@seas.upenn.edu |
+| Rohan Panday     | <rpanday@seas.upenn.edu>  |
+| Jason Li         | <jasonsli@seas.upenn.edu> |
+| Nandini Swami    | <snandini@seas.upenn.edu> |
 
-**GitHub Repository URL:** https://github.com/ese5180/iot-venture-f25-chicken-nuggets#
+**GitHub Repository URL:** <https://github.com/ese5180/iot-venture-f25-chicken-nuggets#>
 
 ## Concept Development
 
@@ -98,9 +98,9 @@ Included below are a hardware system device diagram and a communication diagram:
 
 Overview:
 
-We implemented Device Firmware Update (DFU) over UART . First, we enabled MCUboot as the secure bootloader and configured it for single-slot mode to support serial recovery. This allowed firmware updates through UART using tools like AuTerm and mcumgr, letting us reflash the board without using a debugger. We then extended the setup to support DFU from the application, switching to dual-slot mode so updates could be performed while the main app ran.
+We have successfully implemented Device Firmware Update (DFU) over UART. First, we enabled MCUboot as the secure bootloader and configured it for single-slot mode to support serial recovery. This allowed firmware updates through UART using tools like AuTerm and mcumgr, letting us reflash the board without using a debugger. We then extended the setup to support DFU from the application, switching to dual-slot mode so updates could be performed while the main app ran.
 
-Next, we added custom signing keys for MCUboot using imgtool.py to ensure only trusted firmware could be installed, replacing the default development key. Finally, we enabled external SPI flash as the secondary image slot, increasing available storage for larger applications. 
+Next, we added custom signing keys for MCUboot using imgtool.py to ensure only trusted firmware could be installed, replacing the default development key. Finally, we enabled external SPI flash as the secondary image slot, increasing available storage for larger applications.
 
 The bootloader occupies 32 KB of flash, from address 0x00000 – 0x07FFF. The application occupies roughly 1 MB of flash (0xF8000 bytes), from address 0x08000 – 0x0FFFFF. The application handles DFU via UART (MCUboot only verifies and swaps).
 
@@ -119,3 +119,5 @@ Wireless Communication:
 Our team explored several wireless communication options for firmware-over-the-air (FOTA) updates on the nRF7002 DK. Initially, we considered performing FOTA over LoRaWAN, since it aligns with the communication protocol used in our main project. However, after researching existing implementations and documentation, we found that LoRaWAN’s low data rate and payload size limitations make it impractical for large firmware transfers.
 
 Next, we experimented with Wi-Fi-based FOTA (exercise 7). We attempted to integrate cloud-based FOTA through Memfault and later AWS IoT, but both presented challenges — Memfault’s documentation was outdated for our SDK version, and AWS integration introduced code conflicts with our existing LoRaWAN stack. Currently, we are experimenting with Bluetooth Low Energy (BLE) FOTA. BLE offers a reliable and relatively lightweight communication channel for local updates and may proven easier to integrate with MCUboot compared to cloud-based Wi-Fi solutions.
+
+Our strong preference is to use Memfault for Wi-Fi FOTA. During lecture, we discussed with Nick and Abhik, and have gotten the correct tutorial for Memfault. We have roughly gotten the Memfault online dashboard working following [these](https://docs.memfault.com/docs/mcu/nordic-nrf-connect-sdk-guide?nrf-family=nrf5x) steps, and are able to get Memfault chunk logs (with traces). The place we are actually getting issues now is with FOTA over Wi-Fi. We have the OTA to be deployed active on the dashboard by uploading the bin file. We are encountering issues with it stating "CONFIG_MEMFAULT_FOTA_CLI_CMD not enabled" when we have enabled it, and are waiting for guidance from Navjot (who has gotten this working).
