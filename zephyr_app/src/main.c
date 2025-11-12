@@ -11,12 +11,6 @@
 #define BLINK_PRIORITY 7
 #define LORAWAN_PRIORITY 5
 
-int main (void)
-{
-  LOG_INF("main");
-  return 0;
-}
-
 // LED Blinking Handler Task
 K_THREAD_DEFINE(blink_handler_id, BLINK_STACKSIZE, blink_handler, NULL, NULL, NULL, BLINK_PRIORITY, 0, 0); // Main Green LED
 
