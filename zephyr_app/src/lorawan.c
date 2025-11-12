@@ -2,6 +2,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/random/random.h>
 #include "blink.h"
+#include <stdio.h>
 
 #define LOG_LEVEL CONFIG_LOG_DEFAULT_LEVEL
 LOG_MODULE_REGISTER(lorawan_node);
