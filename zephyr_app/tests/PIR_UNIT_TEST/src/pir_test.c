@@ -39,5 +39,4 @@ ZTEST(pir_test_suite, test_pir_init_resets_state)
                   "pir_init should reset state so pir_read returns 0");
 }
 
-
 ZTEST_SUITE(pir_test_suite, NULL, NULL, NULL, NULL, NULL);
