@@ -3,14 +3,10 @@
 static int pir_state = 0; // default no motion
 
 int pir_init(void) {
-    pir_state = 0;
-    return 0;   // satisfy test 1
+  pir_state = 0;
+  return 0; // satisfy test 1
 }
 
-int pir_read(void) {
-    return pir_state;
-}
+int pir_read(void) { return pir_state; }
 
-void pir_set_state(int new_state) {
-    pir_state = new_state;
-}
+void pir_set_state(int new_state) { pir_state = new_state; }
