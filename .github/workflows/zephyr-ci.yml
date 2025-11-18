@@ -10,10 +10,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 🛒 Checkout repository
+    - name: Checkout repository
       uses: actions/checkout@v4
 
-    - name: 🧹 Free disk space (GitHub runner is tiny)
+    - name: Free disk space
       run: |
         sudo rm -rf /usr/local/lib/android
         sudo rm -rf /usr/share/dotnet
@@ -22,27 +22,35 @@ jobs:
     - name: Pull Zephyr CI Docker image
       run: docker pull ghcr.io/zephyrproject-rtos/zephyr-build:main
 
-    - name: 🛠 Run build + tests inside Docker
+    - name: Build & Test with Twister
       run: |
         docker run --rm \
           -v ${{ github.workspace }}:/workdir \
           -w /workdir \
-          ghcr.io/zephyrproject-rtos/zephyr-build:main bash -lc "
-            set -e
+          ghcr.io/zephyrproject-rtos/zephyr-build:main bash -lc '
+            set -euo pipefail
 
-            echo '== west version =='
+            echo "== west version =="
             west --version
 
-            echo '== Build PIR UNIT TEST =='
-            west twister -p qemu_cortex_m3 -s zephyr_app/tests/PIR_UNIT_TEST
+            echo "== Initializing west workspace (app: zephyr_app) =="
+            west init -l zephyr_app
+            west update
 
-            echo '== Copy artifacts =='
+            echo "== Running PIR unit tests with Twister =="
+            west twister \
+              -p qemu_cortex_m3 \
+              -T zephyr_app/tests/PIR_UNIT_TEST \
+              --inline-logs -v \
+              --outdir zephyr_app/twister-out
+
+            echo "== Collecting artifacts =="
             mkdir -p /workdir/artifacts
-            cp -r twister-out/* /workdir/artifacts/
-          "
+            cp -r zephyr_app/twister-out/* /workdir/artifacts/
+          '
 
-    - name: Upload test results + artifacts
+    - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: zephyr-test-artifacts
+        name: zephyr-ci-artifacts
         path: artifacts
