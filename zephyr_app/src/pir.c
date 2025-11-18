@@ -3,6 +3,7 @@
 static int pir_state = 0; // default no motion
 
 int pir_init(void) {
+    pir_state = 0;
     return 0;   // satisfy test 1
 }
 
