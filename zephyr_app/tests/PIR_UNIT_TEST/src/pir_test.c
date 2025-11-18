@@ -22,5 +22,22 @@ ZTEST(pir_test_suite, test_pir_set_state)
     zassert_equal(pir_read(), 1, "pir_read() should return 1 after motion is set");
 }
 
+/* Test 4: pir_init() clears previous motion state */
+ZTEST(pir_test_suite, test_pir_init_resets_state)
+{
+    /* simulate motion */
+    pir_set_state(1);
+    zassert_equal(pir_read(), 1,
+                  "pir_read should return 1 after motion is set");
+
+    /* re-initialize the PIR driver */
+    int rc = pir_init();
+    zassert_equal(rc, 0, "pir_init should still return 0 on success");
+
+    /* after init, state should be cleared back to no motion */
+    zassert_equal(pir_read(), 0,
+                  "pir_init should reset state so pir_read returns 0");
+}
+
 
 ZTEST_SUITE(pir_test_suite, NULL, NULL, NULL, NULL, NULL);
