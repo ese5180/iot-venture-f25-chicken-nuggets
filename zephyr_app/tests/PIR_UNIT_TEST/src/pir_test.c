@@ -15,4 +15,12 @@ ZTEST(pir_test_suite, test_pir_read_default_no_motion)
     zassert_equal(val, 0, "pir_read should return 0 when no motion is detected");
 }
 
+/* Test 3: pir_set_state() updates pir_read() value */
+ZTEST(pir_test_suite, test_pir_set_state)
+{
+    pir_set_state(1);
+    zassert_equal(pir_read(), 1, "pir_read() should return 1 after motion is set");
+}
+
+
 ZTEST_SUITE(pir_test_suite, NULL, NULL, NULL, NULL, NULL);
