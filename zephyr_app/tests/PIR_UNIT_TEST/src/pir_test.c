@@ -9,3 +9,13 @@ ZTEST(pir_test_suite, test_pir_init_success)
 }
 
 ZTEST_SUITE(pir_test_suite, NULL, NULL, NULL, NULL, NULL);
+
+/* Test 2: pir_is_motion_detected returns 1 when GPIO reads high */
+ZTEST(pir_test_suite, test_pir_motion_detected_high)
+{
+    mock_pir_gpio_value = 1; // <-- we will add this global mock
+
+    int detected = pir_is_motion_detected();
+
+    zassert_equal(detected, 1, "Expected motion detected when GPIO = 1");
+}
