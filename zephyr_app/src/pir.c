@@ -9,3 +9,7 @@ int pir_init(void) {
 int pir_read(void) {
     return pir_state;
 }
+
+void pir_set_state(int new_state) {
+    pir_state = new_state;
+}
