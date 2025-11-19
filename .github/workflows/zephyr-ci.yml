@@ -28,7 +28,6 @@ jobs:
     - name: Build & Test
       run: |
         docker run --rm \
-          -u "$(id -u):$(id -g)" \
           -e HOME=/workdir/.home \
           -v "${{ github.workspace }}:/repo" \
           -w /workdir \
