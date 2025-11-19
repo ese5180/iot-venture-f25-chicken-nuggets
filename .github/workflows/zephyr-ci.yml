@@ -25,27 +25,31 @@ jobs:
     - name: Pull Zephyr CI Docker image
       run: docker pull ghcr.io/zephyrproject-rtos/zephyr-build:main
 
-    - name: Build & Test with Twister
+    - name: Build & Test
       run: |
         docker run --rm \
-          -v ${{ github.workspace }}:/repo \
-          -w /repo \
+          -u "$(id -u):$(id -g)" \
+          -e HOME=/workdir/.home \
+          -v "${{ github.workspace }}:/repo" \
+          -w /workdir \
           ghcr.io/zephyrproject-rtos/zephyr-build:main bash -lc '
             set -euo pipefail
 
-            echo "== Initialize west in repo =="
-            west init -l zephyr_app
-            west update
+            mkdir -p "$HOME/.cmake/packages"
 
-            echo "== Running PIR unit tests =="
-            west twister \
-              -p qemu_cortex_m3 \
-              -T zephyr_app/tests/PIR_UNIT_TEST \
-              --inline-logs -v \
-              --outdir twister-out
+            echo "== Creating new west workspace =="
+            west init -m https://github.com/zephyrproject-rtos/zephyr --mr main
+            west update
+            west zephyr-export
+
+            echo "== Building your app =="
+            west build -p always -b qemu_cortex_m3 /repo/zephyr_app --pristine
+
+            echo "== Running your tests =="
+            west twister -p qemu_cortex_m3 -T /repo/zephyr_app/tests --inline-logs -v
 
             mkdir -p /repo/artifacts
-            cp -r twister-out/* /repo/artifacts/
+            cp -r twister-out /repo/artifacts/ || true
           '
 
     - name: Upload Artifacts
