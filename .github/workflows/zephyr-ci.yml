@@ -36,10 +36,6 @@ jobs:
             echo "== west version =="
             west --version
 
-            echo "== Initializing west workspace (app: zephyr_app) =="
-            west init -l zephyr_app
-            west update
-
             echo "== Running PIR unit tests with Twister =="
             west twister \
               -p qemu_cortex_m3 \
