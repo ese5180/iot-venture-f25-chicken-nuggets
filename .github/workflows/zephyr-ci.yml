@@ -34,13 +34,13 @@ jobs:
             set -euo pipefail
 
             echo "== Initializing a fresh Zephyr workspace =="
-            west init -q .
-            west update -q
+            west init .
+            west update
 
             echo "== Copying your app into workspace =="
             cp -r /repo/zephyr_app ./zephyr_app
 
-            echo "== Running Twister tests =="
+            echo "== Running PIR unit tests with Twister =="
             west twister \
               -p qemu_cortex_m3 \
               -T zephyr_app/tests/PIR_UNIT_TEST \
