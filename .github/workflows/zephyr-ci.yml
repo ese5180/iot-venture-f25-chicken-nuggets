@@ -29,25 +29,21 @@ jobs:
       run: |
         docker run --rm \
           -v ${{ github.workspace }}:/repo \
-          -w /work \
+          -w /repo \
           ghcr.io/zephyrproject-rtos/zephyr-build:main bash -lc '
             set -euo pipefail
 
-            echo "== Initializing a fresh Zephyr workspace =="
-            west init .
+            echo "== Initialize west in repo =="
+            west init -l zephyr_app
             west update
 
-            echo "== Copying your app into workspace =="
-            cp -r /repo/zephyr_app ./zephyr_app
-
-            echo "== Running PIR unit tests with Twister =="
+            echo "== Running PIR unit tests =="
             west twister \
               -p qemu_cortex_m3 \
               -T zephyr_app/tests/PIR_UNIT_TEST \
               --inline-logs -v \
               --outdir twister-out
 
-            echo "== Copying artifacts back =="
             mkdir -p /repo/artifacts
             cp -r twister-out/* /repo/artifacts/
           '
