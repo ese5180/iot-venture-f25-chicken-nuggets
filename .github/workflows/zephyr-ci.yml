@@ -1,12 +1,12 @@
 name: Zephyr CI
 
-permissions:
-  contents: read
-
 on:
   push:
     branches: ["main"]
   pull_request:
+
+permissions:
+  contents: read
 
 jobs:
   build-and-test:
@@ -28,24 +28,28 @@ jobs:
     - name: Build & Test with Twister
       run: |
         docker run --rm \
-          -v ${{ github.workspace }}:/workdir \
-          -w /workdir \
+          -v ${{ github.workspace }}:/repo \
+          -w /work \
           ghcr.io/zephyrproject-rtos/zephyr-build:main bash -lc '
             set -euo pipefail
 
-            echo "== west version =="
-            west --version
+            echo "== Initializing a fresh Zephyr workspace =="
+            west init -q .
+            west update -q
 
-            echo "== Running PIR unit tests with Twister =="
+            echo "== Copying your app into workspace =="
+            cp -r /repo/zephyr_app ./zephyr_app
+
+            echo "== Running Twister tests =="
             west twister \
               -p qemu_cortex_m3 \
               -T zephyr_app/tests/PIR_UNIT_TEST \
               --inline-logs -v \
-              --outdir zephyr_app/twister-out
+              --outdir twister-out
 
-            echo "== Collecting artifacts =="
-            mkdir -p /workdir/artifacts
-            cp -r zephyr_app/twister-out/* /workdir/artifacts/
+            echo "== Copying artifacts back =="
+            mkdir -p /repo/artifacts
+            cp -r twister-out/* /repo/artifacts/
           '
 
     - name: Upload Artifacts
