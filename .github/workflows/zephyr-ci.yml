@@ -83,13 +83,13 @@ jobs:
               west zephyr-export
 
               echo "=== Building test ==="
-              west build -p always -b native_sim/native/64 LAB_CI/tests/SUM_UNIT_TEST --pristine
+              west build -p always -b native_sim/native/64 zephyr_app/tests/PIR_UNIT_TEST --pristine
 
               echo "=== Running test ==="
-              west build -t run LAB_CI/tests/SUM_UNIT_TEST
+              west build -t run zephyr_app/tests/PIR_UNIT_TEST
 
               echo "== Build nrf7002dk/nrf5340/cpuapp =="
-              west build -p always -b nrf7002dk/nrf5340/cpuapp LAB_CI --pristine
+              west build -p always -b nrf7002dk/nrf5340/cpuapp zephyr_app --pristine
             '
 
 
