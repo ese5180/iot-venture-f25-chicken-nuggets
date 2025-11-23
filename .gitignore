@@ -8,3 +8,13 @@ build/
 
 .DS_Store
 .vscode
+
+# Ignore NCS / Zephyr / west workspace stuff
+bootloader/
+modules/
+nrf/
+zephyr/
+toolchain/
+build/
+tfm/
+.nrfconnect-logging/
