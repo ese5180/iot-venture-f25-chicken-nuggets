@@ -1,4 +1,7 @@
 // color.h
+
+#include "lorawan.h"
+
 #ifndef COLOR_H
 #define COLOR_H
 

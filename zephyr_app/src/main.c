@@ -366,6 +366,8 @@ uint32_t mainled_rate = 0;
 static const struct device *i2c1_dev;
 static stmdev_ctx_t sths_ctx;
 
+char print_buffer[256];
+
 // LoRaWAN Handler Task
 K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, LORAWAN_PRIORITY, 0, 0);
 
@@ -547,6 +549,25 @@ void main(void)
                raw_tpres, raw_tmotion,
                presence, motion, amb_shock,
                human_present, hot_object);
+
+        int32_t t100 = (int32_t)(tobj_comp_c * 100.0f); /* °C * 100 */
+        int32_t t_whole = t100 / 100;
+        int32_t t_frac = t100 % 100;
+        if (t_frac < 0)
+        {
+          t_frac = -t_frac;
+        }
+
+        /* PIR status: "M" = motion, "N" = no motion */
+        const char *pir_str = motion ? "M" : "N";
+
+        /* Populate global print_buffer */
+        snprintf(print_buffer, sizeof(print_buffer),
+                 "Tobj=%ld.%02ldC,PIR=%s,HP=%d",
+                 (long)t_whole,
+                 (long)t_frac,
+                 pir_str,
+                 human_present ? 1 : 0);
       }
     }
 

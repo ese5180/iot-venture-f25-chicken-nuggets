@@ -178,21 +178,22 @@ void lorawan_handler(void)
     {
         const uint8_t port = 2;
 
-        // Build "helloworld <n>" into data_buf
-        uint8_t len = (uint8_t)snprintf(
-            data_buf, sizeof(data_buf),
-            "helloworld %lu", (unsigned long)tx_counter++);
+        // // Build "helloworld <n>" into data_buf
+        // uint8_t len = (uint8_t)snprintf(
+        //     data_buf, sizeof(data_buf),
+        //     "helloworld %lu", (unsigned long)tx_counter++);
 
-        if (len >= sizeof(data_buf))
-        {
-            len = sizeof(data_buf) - 1;
-        }
+        // if (len >= sizeof(data_buf))
+        // {
+        //     len = sizeof(data_buf) - 1;
+        // }
 
         // Try to send; if MAC cmds make it too tight, flush once and retry
         int ret = 0;
         for (int tries = 0; tries < 1; ++tries)
         {
-            ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_CONFIRMED);
+            // ret = lorawan_send(port, data_buf, len, LORAWAN_MSG_CONFIRMED);
+            ret = lorawan_send(port, print_buffer, strlen(print_buffer), LORAWAN_MSG_CONFIRMED);
             if (ret == -EAGAIN)
             {
                 (void)lorawan_send(0, NULL, 0, LORAWAN_MSG_CONFIRMED); // MAC-only uplink to flush
@@ -210,11 +211,10 @@ void lorawan_handler(void)
         }
 
         LOG_INF("Data sent!");
-        LOG_INF("Sent: \"%s\" (len=%u)", data_buf, len);
+        LOG_INF("Sent: \"%s\" (len=%u)", print_buffer, strlen(print_buffer));
         LOG_INF("");
         k_sleep(DELAY);
     }
 
     return;
 }
-

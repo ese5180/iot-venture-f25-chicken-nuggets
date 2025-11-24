@@ -137,3 +137,5 @@ The general workflow with the sensors is that the device is in an idle state unt
 We have got sensor readout from all sensors. The main factor now is tuning them (sensitivity, constants, etc), and then also porting this information over LoRA. Below is an image showing all the sensor readout.
 
 ![alt text](image.png)
+
+![alt text](image-1.png)
