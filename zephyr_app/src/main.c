@@ -341,10 +341,16 @@
 #include "sths34pf80_reg.h"
 #include "color.h"
 #include "pir.h"
+#include "lorawan.h"
+
+#include <stdint.h>
 
 /* I2C bus used for both STHS34PF80 and APDS9960 */
 #define I2C1_NODE DT_NODELABEL(i2c1)
 #define STHS34PF80_I2C_ADDR 0x5A
+
+#define LORAWAN_STACKSIZE 8192
+#define LORAWAN_PRIORITY 5
 
 /* Temperature conversion factors (LSB per °C).
  * Adjust if you want exact scaling from the datasheet. */
@@ -354,9 +360,14 @@
 #define PIR_STACKSIZE 1024
 #define PIR_PRIORITY 6
 
+uint32_t mainled_rate = 0;
+
 /* Global context for STHS34PF80 */
 static const struct device *i2c1_dev;
 static stmdev_ctx_t sths_ctx;
+
+// LoRaWAN Handler Task
+K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, LORAWAN_PRIORITY, 0, 0);
 
 // PIR handler
 K_THREAD_DEFINE(pir_handler_id, PIR_STACKSIZE, pir_handler, NULL, NULL, NULL, PIR_PRIORITY, 0, 0);
