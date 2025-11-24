@@ -1,15 +1,120 @@
+// &spi1 {
+//     status = "okay";
+//     compatible = "nordic,nrf-spim";
+//     cs-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+
+//     pinctrl-0 = <&spi1_default>;
+//     pinctrl-1 = <&spi1_sleep>;
+//     pinctrl-names = "default", "sleep";
+//     lora: sx1276@0 {
+//         compatible = "semtech,sx1276";
+//         reg = <0>;
+//         label = "sx1276";
+//         reset-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+//         dio-gpios = <&gpio0 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+//                      <&gpio0 1 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+//                      <&gpio0 0 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+//                      <&gpio0 13 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+//                      <&gpio0 5 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
+//                      <&gpio0 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+//         rfi-enable-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+//         rfo-enable-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
+//         pa-boost-enable-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
+//         tcxo-power-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
+//         tcxo-power-startup-delay-ms = <5>;
+//         spi-max-frequency = <1000000>;
+//     };
+// };
+
+// &i2c1 {
+//   compatible = "nordic,nrf-twim";
+//   status = "okay";
+
+//   pinctrl-0 = <&i2c1_default>;
+//   pinctrl-1 = <&i2c1_sleep>;
+//   pinctrl-names = "default", "sleep";
+
+//   clock-frequency = <I2C_BITRATE_STANDARD>;
+
+//   apds9960@39 {
+//       compatible = "avago,apds9960";
+//       reg = <0x39>;
+//       label = "APDS9960";
+//       status = "okay";
+//       int-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+//   };
+// };
+
+
+// &pinctrl {
+// 	/omit-if-no-ref/ spi1_default: spi1_default {
+// 		group1 {
+// 			psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+// 				<NRF_PSEL(SPIM_MOSI, 1, 11)>,
+// 				<NRF_PSEL(SPIM_MISO, 1, 10)>;
+// 		};
+// 	};
+
+// 	/omit-if-no-ref/ spi1_sleep: spi1_sleep {
+// 		group1 {
+// 			psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+// 				<NRF_PSEL(SPIM_MOSI, 1, 11)>,
+// 				<NRF_PSEL(SPIM_MISO, 1, 10)>;
+// 			low-power-enable;
+// 		};
+// 	};
+
+//     i2c1_default: i2c1_default {
+//         group1 {
+//             psels = <NRF_PSEL(TWIM_SDA, 0, 2)>,
+//                     <NRF_PSEL(TWIM_SCL, 0, 3)>;
+//         };
+//     };
+
+//     i2c1_sleep: i2c1_sleep {
+//         group1 {
+//             psels = <NRF_PSEL(TWIM_SDA, 0, 2)>,
+//                     <NRF_PSEL(TWIM_SCL, 0, 3)>;
+//             low-power-enable;
+//         };
+//     };
+// };
+
+// / {
+//     aliases {
+//        lora0 = &lora;
+//   };
+// };
+
+/ {
+    /* ----------------------------------------------------------
+     * Aliases (kept but Lora disabled since SPI1 commented out)
+     * ---------------------------------------------------------- */
+    aliases {
+        // lora0 = &lora;   /* Disabled */
+    };
+};
+
+/* ============================================================
+ *  SPI1 + SX1276 (Lora) — DISABLED
+ *  Keeping here for reference; will not be compiled.
+ * ============================================================ */
+/*
 &spi1 {
-    status = "okay";
+    status = "disabled";   // <--- Disabled
+
     compatible = "nordic,nrf-spim";
     cs-gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
 
     pinctrl-0 = <&spi1_default>;
     pinctrl-1 = <&spi1_sleep>;
     pinctrl-names = "default", "sleep";
+
     lora: sx1276@0 {
         compatible = "semtech,sx1276";
         reg = <0>;
         label = "sx1276";
+
         reset-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
         dio-gpios = <&gpio0 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
                      <&gpio0 1 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
@@ -17,36 +122,92 @@
                      <&gpio0 13 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
                      <&gpio0 5 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>,
                      <&gpio0 4 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+
         rfi-enable-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
         rfo-enable-gpios = <&gpio0 2 GPIO_ACTIVE_HIGH>;
         pa-boost-enable-gpios = <&gpio0 1 GPIO_ACTIVE_HIGH>;
         tcxo-power-gpios = <&gpio0 12 GPIO_ACTIVE_HIGH>;
         tcxo-power-startup-delay-ms = <5>;
+
         spi-max-frequency = <1000000>;
     };
 };
+*/
 
-&pinctrl {
-	/omit-if-no-ref/ spi1_default: spi1_default {
-		group1 {
-			psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
-				<NRF_PSEL(SPIM_MOSI, 1, 11)>,
-				<NRF_PSEL(SPIM_MISO, 1, 10)>;
-		};
-	};
+/* ============================================================
+ *  I2C1 — ACTIVE DEVICE
+ *  Using P0.26 (SDA) and P0.27 (SCL)
+ * ============================================================ */
 
-	/omit-if-no-ref/ spi1_sleep: spi1_sleep {
-		group1 {
-			psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
-				<NRF_PSEL(SPIM_MOSI, 1, 11)>,
-				<NRF_PSEL(SPIM_MISO, 1, 10)>;
-			low-power-enable;
-		};
-	};
+&i2c1 {
+    status = "okay";
+    compatible = "nordic,nrf-twim";
+
+    pinctrl-0 = <&i2c1_default>;
+    pinctrl-1 = <&i2c1_sleep>;
+    pinctrl-names = "default", "sleep";
+
+    clock-frequency = <I2C_BITRATE_STANDARD>;
+
+    /* APDS9960 Color Sensor */
+    apds9960@39 {
+        compatible = "avago,apds9960";
+        reg = <0x39>;
+        label = "APDS9960";
+        status = "okay";
+
+        /* INT pin stays on P0.04 unless you want to change it */
+        int-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+    };
 };
 
-/ {
-    aliases {
-       lora0 = &lora;
-  };
+/* ============================================================
+ *  Pin Control Section
+ *  Only I2C1 pins are active.
+ *  SPI1 pinctrl preserved but commented out.
+ * ============================================================ */
+
+&pinctrl {
+
+    /* --------------------
+     * SPI1 pinctrl DISABLED
+     * -------------------- */
+    /*
+    spi1_default: spi1_default {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+                    <NRF_PSEL(SPIM_MOSI, 1, 11)>,
+                    <NRF_PSEL(SPIM_MISO, 1, 10)>;
+        };
+    };
+
+    spi1_sleep: spi1_sleep {
+        group1 {
+            psels = <NRF_PSEL(SPIM_SCK, 1, 12)>,
+                    <NRF_PSEL(SPIM_MOSI, 1, 11)>,
+                    <NRF_PSEL(SPIM_MISO, 1, 10)>;
+            low-power-enable;
+        };
+    };
+    */
+
+    /* --------------------
+     * I2C1 pinctrl ACTIVE
+     * SDA = P0.26
+     * SCL = P0.27
+     * -------------------- */
+    i2c1_default: i2c1_default {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 26)>,
+                    <NRF_PSEL(TWIM_SCL, 0, 27)>;
+        };
+    };
+
+    i2c1_sleep: i2c1_sleep {
+        group1 {
+            psels = <NRF_PSEL(TWIM_SDA, 0, 26)>,
+                    <NRF_PSEL(TWIM_SCL, 0, 27)>;
+            low-power-enable;
+        };
+    };
 };

@@ -19,16 +19,24 @@
 };
 
 // spi setup for rgb sensor
-&i2c1 {
-  compatible = "nordic,nrf-twim";
-  status = "okay";
+// &i2c0 {
+//   compatible = "nordic,nrf-twim";
+//   status = "okay";
 
-  pinctrl-0 = <&i2c1_default>;
-  pinctrl-1 = <&i2c1_sleep>;
-  pinctrl-names = "default", "sleep";
+//   pinctrl-0 = <&i2c0_default>;
+//   pinctrl-1 = <&i2c0_sleep>;
+//   pinctrl-names = "default", "sleep";
 
-  clock-frequency = <I2C_BITRATE_STANDARD>;
-};
+//   clock-frequency = <I2C_BITRATE_STANDARD>;
+
+//   apds9960@39 {
+//       compatible = "avago,apds9960";
+//       reg = <0x39>;
+//       label = "APDS9960";
+//       status = "okay";
+//       int-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+//   };
+// };
 
 &pinctrl {
   /omit-if-no-ref/ spi2_default: spi2_default {
@@ -48,20 +56,21 @@
       };
   };
 
-  i2c1_default: i2c1_default {
-      group1 {
-          psels = <NRF_PSEL(TWIM_SDA, 0, 2)>,
-                  <NRF_PSEL(TWIM_SCL, 0, 3)>;
-      };
-  };
+  // i2c0_default: i2c0_default {
+  //       group1 {
+  //           psels = <NRF_PSEL(TWIM_SDA, 0, 2)>,
+  //                   <NRF_PSEL(TWIM_SCL, 0, 3)>;
+  //       };
+  //   };
 
-  i2c1_sleep: i2c1_sleep {
-      group1 {
-          psels = <NRF_PSEL(TWIM_SDA, 0, 2)>,
-                  <NRF_PSEL(TWIM_SCL, 0, 3)>;
-          low-power-enable;
-      };
-  };
+  //   i2c0_sleep: i2c0_sleep {
+  //       group1 {
+  //           psels = <NRF_PSEL(TWIM_SDA, 0, 2)>,
+  //                   <NRF_PSEL(TWIM_SCL, 0, 3)>;
+  //           low-power-enable;
+  //       };
+  //   };
+// };
 };
 
 / {
