@@ -8,11 +8,11 @@
 
 | Team Member Name | Email Address           |
 | ---------------- | ----------------------- |
-| Rohan Panday     | rpanday@seas.upenn.edu  |
-| Jason Li         | jasonsli@seas.upenn.edu |
-| Nandini Swami    | snandini@seas.upenn.edu |
+| Rohan Panday     | <rpanday@seas.upenn.edu>  |
+| Jason Li         | <jasonsli@seas.upenn.edu> |
+| Nandini Swami    | <snandini@seas.upenn.edu> |
 
-**GitHub Repository URL:** https://github.com/ese5180/iot-venture-f25-chicken-nuggets#
+**GitHub Repository URL:** <https://github.com/ese5180/iot-venture-f25-chicken-nuggets#>
 
 ## Concept Development
 
@@ -100,7 +100,7 @@ Overview:
 
 We implemented Device Firmware Update (DFU) over UART . First, we enabled MCUboot as the secure bootloader and configured it for single-slot mode to support serial recovery. This allowed firmware updates through UART using tools like AuTerm and mcumgr, letting us reflash the board without using a debugger. We then extended the setup to support DFU from the application, switching to dual-slot mode so updates could be performed while the main app ran.
 
-Next, we added custom signing keys for MCUboot using imgtool.py to ensure only trusted firmware could be installed, replacing the default development key. Finally, we enabled external SPI flash as the secondary image slot, increasing available storage for larger applications. 
+Next, we added custom signing keys for MCUboot using imgtool.py to ensure only trusted firmware could be installed, replacing the default development key. Finally, we enabled external SPI flash as the secondary image slot, increasing available storage for larger applications.
 
 The bootloader occupies 32 KB of flash, from address 0x00000 – 0x07FFF. The application occupies roughly 1 MB of flash (0xF8000 bytes), from address 0x08000 – 0x0FFFFF. The application handles DFU via UART (MCUboot only verifies and swaps).
 
@@ -120,6 +120,16 @@ Our team explored several wireless communication options for firmware-over-the-a
 
 Next, we experimented with Wi-Fi-based FOTA (exercise 7). We attempted to integrate cloud-based FOTA through Memfault and later AWS IoT, but both presented challenges — Memfault’s documentation was outdated for our SDK version, and AWS integration introduced code conflicts with our existing LoRaWAN stack. Currently, we are experimenting with Bluetooth Low Energy (BLE) FOTA. BLE offers a reliable and relatively lightweight communication channel for local updates and may proven easier to integrate with MCUboot compared to cloud-based Wi-Fi solutions.
 
-### MVP DEMO:
+### MVP DEMO
 
-For our MVP demo, we have used several sensors and integrated many of the features required in order to make 
+For our MVP demo, we have used several sensors and integrated many of the features required in order to make the full functionality of OpenDesk come together.
+
+The sensors used are:
+
+* PIR MOTION SENSOR (Seeed Technology Co., Ltd)
+* APDS-9960 Digital Proximity, Ambient Light, RGB and Gesture Sensor
+* SparkFun Human Presence and Motion Sensor - STHS34PF80 (Qwiic)
+
+The PIR motion sensor does not require a driver as it is a digital sensor. The RGB sensor had an example on Zephyr which we were able to adapt into a driver. The presence sensor had a driver we were able to use from ST Micro.
+
+The general workflow with the sensors is that the device is in an idle state until it recieves a wake command, triggered by motion detected by the PIR sensor. Then, the presence sensor is woken up to detect human presence, and if the device is configured for a single person space, the color sensor will be used to detect if it is a new person, or if the same person returned.
