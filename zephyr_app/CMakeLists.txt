@@ -11,6 +11,7 @@ target_sources(app PRIVATE
     src/main.c
     src/sths34pf80_reg.c
     src/color.c
+    src/pir.c
 )
 
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -19,4 +20,5 @@ zephyr_library_sources(
     #src/sths34pf80_zephyr.c
     src/sths34pf80_reg.c
     src/color.c
+    src/pir.c
 )

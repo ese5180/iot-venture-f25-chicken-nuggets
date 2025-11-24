@@ -133,3 +133,7 @@ The sensors used are:
 The PIR motion sensor does not require a driver as it is a digital sensor. The RGB sensor had an example on Zephyr which we were able to adapt into a driver. The presence sensor had a driver we were able to use from ST Micro.
 
 The general workflow with the sensors is that the device is in an idle state until it recieves a wake command, triggered by motion detected by the PIR sensor. Then, the presence sensor is woken up to detect human presence, and if the device is configured for a single person space, the color sensor will be used to detect if it is a new person, or if the same person returned.
+
+We have got sensor readout from all sensors. The main factor now is tuning them (sensitivity, constants, etc), and then also porting this information over LoRA. Below is an image showing all the sensor readout.
+
+![alt text](image.png)

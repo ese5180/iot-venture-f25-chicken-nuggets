@@ -41,6 +41,13 @@
     };
 };
 
+/ {
+  zephyr,user {
+      pir_gpios = <&gpio0 28 (GPIO_PULL_DOWN | GPIO_ACTIVE_HIGH)>;
+      /* If your PIR idles HIGH and pulses LOW, use GPIO_ACTIVE_LOW instead */
+  };
+};
+
 
 // / {
 // };

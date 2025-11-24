@@ -340,6 +340,7 @@
 
 #include "sths34pf80_reg.h"
 #include "color.h"
+#include "pir.h"
 
 /* I2C bus used for both STHS34PF80 and APDS9960 */
 #define I2C1_NODE DT_NODELABEL(i2c1)
@@ -350,9 +351,15 @@
 #define STHS34PF80_TAMBIENT_SENS_LSB_PER_C 10.0f
 #define STHS34PF80_TOBJECT_SENS_LSB_PER_C 10.0f
 
+#define PIR_STACKSIZE 1024
+#define PIR_PRIORITY 6
+
 /* Global context for STHS34PF80 */
 static const struct device *i2c1_dev;
 static stmdev_ctx_t sths_ctx;
+
+// PIR handler
+K_THREAD_DEFINE(pir_handler_id, PIR_STACKSIZE, pir_handler, NULL, NULL, NULL, PIR_PRIORITY, 0, 0);
 
 /* ---------- Low-level I2C bridge for ST driver ---------- */
 
