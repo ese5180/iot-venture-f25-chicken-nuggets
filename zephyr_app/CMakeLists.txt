@@ -10,6 +10,7 @@ FILE(GLOB app_sources src/*.c)
 target_sources(app PRIVATE
     src/main.c
     src/sths34pf80_reg.c
+    src/color.c
 )
 
 target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -17,4 +18,5 @@ target_include_directories(app PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 zephyr_library_sources(
     #src/sths34pf80_zephyr.c
     src/sths34pf80_reg.c
+    src/color.c
 )
