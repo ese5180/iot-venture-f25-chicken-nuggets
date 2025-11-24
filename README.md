@@ -139,3 +139,18 @@ We have got sensor readout from all sensors. The main factor now is tuning them 
 ![alt text](image.png)
 
 ![alt text](image-1.png)
+
+Regarding the MVP criteria, we fulfill the following:
+
+* At least two devices showing the functionality below
+  * We have 1 device with the full functionality of all sensors integrated, and 2 other devices with the MVP requirements (2 sensors + LoraWAN). We still need to wire up the remaining sensors on the other 2 devices.
+* Transmitting key data from the devices to a cloud server
+  * We have a reliable LoRaWAN connection that allows us to send sensor readings to TTN (for MVP), and will adjust this to send sensor data to an AWS server.
+* Demonstrating over-the-air firmware updates with signed images.
+  * We have sucessfully deployed FUOTA using AWS. We need to increase the speed of these updates, but we were able to deploy from the gateway and also recieve packets on the end device.
+* Showing the use of Git Hooks / CI pipelines to run unit tests.
+  * We have setup basic Git Hooks and have a CI pipeline to run unit tests.
+* Leveraging Memfault for managing devices.
+  * We have used Memfault's core dump and fleet management tools in our debugging process. We are doing our FOTA using AWS as it is easier for LoRaWAN deployment.
+* Demonstrating functionality and integration of your peripheral devices.
+  * We have a fully integrated device that transmits data using LoRaWAN, which we can demonstrate in the MVP.
