@@ -29,7 +29,7 @@ LOG_MODULE_REGISTER(lorawan_node);
 #define LORAWAN_APP_KEY {0x62, 0x04, 0xBA, 0xC1, 0x07, 0x27, 0x93, 0xE6, 0x73, 0xFD, 0x11, 0xB8, 0x93, 0xA7, 0x31, 0x69}
 #endif
 
-#define DELAY K_MSEC(30000) // Delay between sends, 10000 ms
+#define DELAY K_MSEC(90000) // Delay between sends, 10000 ms
 
 static char data_buf[32];
 static uint32_t tx_counter = 1; // start at 1
@@ -170,7 +170,7 @@ void lorawan_handler(void)
     } while (ret < 0);
 
     lorawan_enable_adr(false);          // stop the network from holding you at DR_0
-    lorawan_set_datarate(LORAWAN_DR_4); // US915 DR_4
+    lorawan_set_datarate(LORAWAN_DR_3); // US915 DR_4
     LOG_INF("Lorawan join succeeded");
     LOG_INF("Starting to send data");
 
