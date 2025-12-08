@@ -12,10 +12,12 @@
 // #define LORAWAN_PRIORITY 5
 
 // // LED Blinking Handler Task
-// K_THREAD_DEFINE(blink_handler_id, BLINK_STACKSIZE, blink_handler, NULL, NULL, NULL, BLINK_PRIORITY, 0, 0); // Main Green LED
+// K_THREAD_DEFINE(blink_handler_id, BLINK_STACKSIZE, blink_handler, NULL, NULL,
+// NULL, BLINK_PRIORITY, 0, 0); // Main Green LED
 
 // // LoRaWAN Handler Task
-// K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, LORAWAN_PRIORITY, 0, 0);
+// K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL,
+// NULL, NULL, LORAWAN_PRIORITY, 0, 0);
 
 // #include <zephyr/kernel.h>
 // #include <zephyr/device.h>
@@ -329,19 +331,19 @@
 //   }
 // }
 
-#include <zephyr/kernel.h>
 #include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <string.h>
 
-#include "sths34pf80_reg.h"
 #include "color.h"
-#include "pir.h"
 #include "lorawan.h"
+#include "pir.h"
+#include "sths34pf80_reg.h"
 
 #include <stdint.h>
 
@@ -359,6 +361,7 @@
 
 #define PIR_STACKSIZE 1024
 #define PIR_PRIORITY 6
+#define COLOR_PRIORITY 0
 
 uint32_t mainled_rate = 0;
 
@@ -369,22 +372,26 @@ static stmdev_ctx_t sths_ctx;
 char print_buffer[256];
 
 // LoRaWAN Handler Task
-K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL, NULL, NULL, LORAWAN_PRIORITY, 0, 0);
+K_THREAD_DEFINE(lorawan_handler_id, LORAWAN_STACKSIZE, lorawan_handler, NULL,
+                NULL, NULL, LORAWAN_PRIORITY, 0, 0);
 
 // PIR handler
-K_THREAD_DEFINE(pir_handler_id, PIR_STACKSIZE, pir_handler, NULL, NULL, NULL, PIR_PRIORITY, 0, 0);
+K_THREAD_DEFINE(pir_handler_id, PIR_STACKSIZE, pir_handler, NULL, NULL, NULL,
+                PIR_PRIORITY, 0, 0);
+
+// Color handler
+// K_THREAD_DEFINE(color_handler_id, PIR_STACKSIZE, color_handler, NULL, NULL,
+// NULL, PIR_PRIORITY, 0, 0);
 
 /* ---------- Low-level I2C bridge for ST driver ---------- */
 
-static int32_t sths_i2c_write(void *ctx, uint8_t reg,
-                              const uint8_t *bufp, uint16_t len)
-{
+static int32_t sths_i2c_write(void *ctx, uint8_t reg, const uint8_t *bufp,
+                              uint16_t len) {
   const struct device *i2c = (const struct device *)ctx;
 
   /* Build [reg | data...] buffer on stack */
   uint8_t tmp[1 + 32];
-  if (len > 32U)
-  {
+  if (len > 32U) {
     /* Avoid silly-sized transfers; tune if needed */
     return -1;
   }
@@ -396,33 +403,24 @@ static int32_t sths_i2c_write(void *ctx, uint8_t reg,
   return (ret == 0) ? 0 : -1;
 }
 
-static int32_t sths_i2c_read(void *ctx, uint8_t reg,
-                             uint8_t *bufp, uint16_t len)
-{
+static int32_t sths_i2c_read(void *ctx, uint8_t reg, uint8_t *bufp,
+                             uint16_t len) {
   const struct device *i2c = (const struct device *)ctx;
 
-  int ret = i2c_write_read(i2c,
-                           STHS34PF80_I2C_ADDR,
-                           &reg, 1,
-                           bufp, len);
+  int ret = i2c_write_read(i2c, STHS34PF80_I2C_ADDR, &reg, 1, bufp, len);
   return (ret == 0) ? 0 : -1;
 }
 
-static void sths_delay(uint32_t msec)
-{
-  k_msleep(msec);
-}
+static void sths_delay(uint32_t msec) { k_msleep(msec); }
 
 /* ---------- STHS34PF80 initialization ---------- */
 
-static int sths_init(void)
-{
+static int sths_init(void) {
   int32_t ret;
   uint8_t whoami = 0;
 
   i2c1_dev = DEVICE_DT_GET(I2C1_NODE);
-  if (!device_is_ready(i2c1_dev))
-  {
+  if (!device_is_ready(i2c1_dev)) {
     printk("I2C1 device not ready\n");
     return -ENODEV;
   }
@@ -435,15 +433,13 @@ static int sths_init(void)
 
   /* Check WHOAMI */
   ret = sths34pf80_device_id_get(&sths_ctx, &whoami);
-  if (ret != 0)
-  {
+  if (ret != 0) {
     printk("STHS34PF80: WHOAMI read failed (%d)\n", (int)ret);
     return -EIO;
   }
 
   printk("STHS34PF80 WHOAMI=0x%02x\n", whoami);
-  if (whoami != STHS34PF80_ID)
-  {
+  if (whoami != STHS34PF80_ID) {
     printk("STHS34PF80: unexpected ID (expected 0x%02x)\n", STHS34PF80_ID);
     return -EINVAL;
   }
@@ -471,25 +467,24 @@ static int sths_init(void)
 
 /* color_handler() is defined in color.c and runs its own while(1) loop.
  * We put it in its own Zephyr thread so main() can still run STHS34PF80. */
-static void color_thread_entry(void *a, void *b, void *c)
-{
-  ARG_UNUSED(a);
-  ARG_UNUSED(b);
-  ARG_UNUSED(c);
-  color_handler(); /* never returns */
-}
+// static void color_thread_entry(void *a, void *b, void *c)
+// {
+//   ARG_UNUSED(a);
+//   ARG_UNUSED(b);
+//   ARG_UNUSED(c);
+//   color_handler(); /* never returns */
+// }
 
 /* Stack size / priority: tweak if needed */
-K_THREAD_DEFINE(color_thread_id,
-                2048,
-                color_thread_entry,
-                NULL, NULL, NULL,
-                5, 0, 0);
+K_THREAD_DEFINE(color_thread_id, PIR_STACKSIZE, color_handler, NULL, NULL, NULL,
+                COLOR_PRIORITY, 0, 0);
+
+// K_THREAD_DEFINE(color_handler_id, PIR_STACKSIZE, color_handler, NULL, NULL,
+// NULL, PIR_PRIORITY, 0, 0);
 
 /* ---------- Main ---------- */
 
-void main(void)
-{
+void main(void) {
   int ret;
 
   printk("STHS34PF80 + APDS9960 demo starting...\n");
@@ -498,25 +493,19 @@ void main(void)
   k_msleep(1000);
 
   ret = sths_init();
-  if (ret)
-  {
+  if (ret) {
     printk("STHS34PF80 init failed (%d), continuing anyway\n", ret);
-  }
-  else
-  {
+  } else {
     printk("STHS34PF80 init OK, entering measurement loop...\n");
   }
 
-  while (1)
-  {
+  while (1) {
     /* Only try to read if init succeeded */
-    if (ret == 0)
-    {
+    if (ret == 0) {
       sths34pf80_drdy_status_t drdy;
       int32_t st = sths34pf80_drdy_status_get(&sths_ctx, &drdy);
 
-      if (st == 0 && drdy.drdy)
-      {
+      if (st == 0 && drdy.drdy) {
         int16_t raw_tamb = 0;
         int16_t raw_tobj = 0;
         int16_t raw_tobj_comp = 0;
@@ -533,28 +522,63 @@ void main(void)
 
         float tamb_c = (float)raw_tamb / STHS34PF80_TAMBIENT_SENS_LSB_PER_C;
         float tobj_c = (float)raw_tobj / STHS34PF80_TOBJECT_SENS_LSB_PER_C;
-        float tobj_comp_c = (float)raw_tobj_comp / STHS34PF80_TOBJECT_SENS_LSB_PER_C;
+        float tobj_comp_c =
+            (float)raw_tobj_comp / STHS34PF80_TOBJECT_SENS_LSB_PER_C;
 
         bool presence = (fstatus.pres_flag != 0U);
         bool motion = (fstatus.mot_flag != 0U);
         bool amb_shock = (fstatus.mot_flag != 0U);
 
         bool hot_object = (tobj_comp_c > tamb_c + 3.0f);
-        bool human_present = presence || hot_object;
+        bool human_present = (tobj_c > 0.0f);
+
+        int no_humans_present = (tobj_c < 50.0f) ? 0 : // no humans
+                                    (tobj_c < 150.0f) ? 1
+                                                      : // one human
+                                    (tobj_c < 200.0f)
+                                    ? 1
+                                    :  // maybe two (still treat as 1 for now)
+                                    2; // two humans
+
+        // 6in = 577
+        // 1 ft = 305
+        // 2ft = 212/215
+        // 3ft = 130
+        // 4ft = 112
+        // black body radiation curve fits
+
+        // 2 hands
+        // 6in = 637
+        // 1 ft = 400
+        // 2ft = 228
+        // 3ft = 175
+        // 4ft = 112
+        // black body radiation curve fits
+
+        // rohan
+
+        // 1 ft = 160
+        // 2ft = 95
+        // 3ft = 64
+        // 4ft = 45 (35-55)
+        // black body radiation curve fits
+
+        // rohan + nandini
+        // 1 ft = 255
+        // 2 ft = 220
+        // 3 ft = 170
+        // 4ft = 115
+        // black body radiation curve fits
 
         printk("STHS34PF80: Tamb=%.2f C Tobj=%.2f C Tobj_comp=%.2f C | "
                "TPRES=%d TMOTION=%d | flags: pres=%d mot=%d shock=%d | "
-               "human_present=%d hot_object=%d\n",
-               tamb_c, tobj_c, tobj_comp_c,
-               raw_tpres, raw_tmotion,
-               presence, motion, amb_shock,
-               human_present, hot_object);
-
+               "human_present=%d hot_object=%d no_humans_present=%d\n",
+               tamb_c, tobj_c, tobj_comp_c, raw_tpres, raw_tmotion, presence,
+               motion, amb_shock, human_present, hot_object, no_humans_present);
         int32_t t100 = (int32_t)(tobj_comp_c * 100.0f); /* °C * 100 */
         int32_t t_whole = t100 / 100;
         int32_t t_frac = t100 % 100;
-        if (t_frac < 0)
-        {
+        if (t_frac < 0) {
           t_frac = -t_frac;
         }
 
@@ -563,11 +587,9 @@ void main(void)
 
         /* Populate global print_buffer */
         snprintf(print_buffer, sizeof(print_buffer),
-                 "Tobj=%ld.%02ldC,PIR=%s,HP=%d",
-                 (long)t_whole,
-                 (long)t_frac,
-                 pir_str,
-                 human_present ? 1 : 0);
+                 "Tobj=%ld.%02ldC,PIR=%s,HP=%d,NH=%d", (long)t_whole,
+                 (long)t_frac, pir_str, human_present ? 1 : 0,
+                 no_humans_present);
       }
     }
 
