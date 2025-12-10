@@ -532,13 +532,28 @@ void main(void) {
         bool hot_object = (tobj_comp_c > tamb_c + 3.0f);
         bool human_present = (tobj_c > 0.0f);
 
-        int no_humans_present = (tobj_c < 50.0f) ? 0 : // no humans
-                                    (tobj_c < 150.0f) ? 1
-                                                      : // one human
-                                    (tobj_c < 200.0f)
-                                    ? 1
-                                    :  // maybe two (still treat as 1 for now)
-                                    2; // two humans
+        // int no_humans_present = (tobj_c < 50.0f) ? 0 : // no humans
+        //                             (tobj_c < 150.0f) ? 1
+        //                                               : // one human
+        //                             (tobj_c < 200.0f)
+        //                             ? 1
+        //                             :  // maybe two (still treat as 1 for now)
+        //                             2; // two humans
+
+        int no_humans_present;
+        if (tobj_c < 70.0f) {
+            no_humans_present = 0;
+        } else if (tobj_c < 150.0f) {
+            no_humans_present = 1;
+        } else if (tobj_c < 230.0f) {
+            no_humans_present = 2;
+        } else if (tobj_c < 400.0f) {
+            no_humans_present = 3;
+        } else if (tobj_c < 570.0f) {
+            no_humans_present = 4;
+        } else {
+            no_humans_present = 5;
+        }
 
         // 6in = 577
         // 1 ft = 305

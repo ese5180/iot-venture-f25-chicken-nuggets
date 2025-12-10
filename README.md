@@ -154,3 +154,47 @@ Regarding the MVP criteria, we fulfill the following:
   * We have used Memfault's core dump and fleet management tools in our debugging process. We are doing our FOTA using AWS as it is easier for LoRaWAN deployment.
 * Demonstrating functionality and integration of your peripheral devices.
   * We have a fully integrated device that transmits data using LoRaWAN, which we can demonstrate in the MVP.
+
+### Retrospective
+
+#### Successes
+
+Some things that we would consider a success for our project are:
+
+- LoRaWAN transport.
+  - We are able to reliably and consistently transmit our data over LoRaWAN. We ran into plenty of issues early on with our LoRa transceiver setup, but with the help of our peers, professor, and plenty of research, we were able to ge the wireless transmission system completely working.
+
+- Sensor readings.
+  - We are able to achieve reasonably accurate results for determining occupancy using our sensors. We also ran into some initial issues setting up communication with all the sensors in the system, especially since we have multiple devices on the same I2C bus and needed to deal with concurrency. However, we were able to abstract concurrency issues away with the use of Zephyr RTOS threads.
+
+- CI pipeline.
+  - We have a working CI pipeline that we can use to validate any code that we push to our repo.
+
+- Pitch and vision.
+  - We articulated our vision, technical details, market analysis, and pricing model clearly and fluently during our pitch. We were able to address many of our investors' questions and concerns. The goal and scope of our product is clear and simple.
+
+- Delegation of work and problem solving.
+  - We split up our tasks well, taking each of our members' strengths into account. We were able to assign a roughly equal amount of work to each member of our team. We problem solved well as a group, meeting frequently together to address any large issues we ran into.
+
+#### Areas for Improvement
+
+Some things that could've gone better while implementing our project are:
+
+- More defined test criteria.
+  - It would have been helpful to define what a successful product would have looked like before we started diving right in and implementing it. This would give us clear and concrete goals to move towards. If we had picked "checkpoints" or deliverable goals to move towards one at a time, we could have focused our efforts more clearly and moved faster.
+
+- FOTA.
+  - We ran into many issues while getting FOTA updates working. We tried two approaches:
+    - AWS IoT, over LoRa
+      - This ended up being our final solution. We weren't able to progress using this method until we had picked up a separate LoRa gateway than the one currently in Detkin. We struggled with unclear documentation, extremely slow iteration as LoRa OTAs take a long time to schedule and transmit, and unreliable transmission consistency (we would regularly lose about 50\% of our packets per OTA).
+    - Memfault, over Wi-Fi
+      - We tried this as an alternative solution when we were running into issues with LoRa FOTA updates. We constantly strugged with outdated documentation and code that didn't compile, excessive memory usage from the Wi-Fi stack on Zephyr, and conflicts with our existing LoRa stack. Debugging this took up much of our time that we wish was better spent on other features.
+
+- Integration.
+  - We had some trouble integrating our sensor systems and LoRa stack together, especially what data to transit and how often this would happen. It would have been helpful to start the integration process earlier so that we had more time to focus on polishing our solution.
+
+##### Development Approach
+
+
+##### System Design
+- We believe our wireless communication protocol was the right choice. Because we aim for our device to publish small, periodic summaries of data, the more heavyweight and battery-consuming Wi-Fi stack is unnecessary. In general, however, FOTA updates using LoRa are difficult to implement and ensure reliability for due to the protocol's small packet sizes.
