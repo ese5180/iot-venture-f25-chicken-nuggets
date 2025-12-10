@@ -8,11 +8,11 @@
 
 | Team Member Name | Email Address           |
 | ---------------- | ----------------------- |
-| Rohan Panday     | rpanday@seas.upenn.edu  |
-| Jason Li         | jasonsli@seas.upenn.edu |
-| Nandini Swami    | snandini@seas.upenn.edu |
+| Rohan Panday     | <rpanday@seas.upenn.edu>  |
+| Jason Li         | <jasonsli@seas.upenn.edu> |
+| Nandini Swami    | <snandini@seas.upenn.edu> |
 
-**GitHub Repository URL:** https://github.com/ese5180/iot-venture-f25-chicken-nuggets#
+**GitHub Repository URL:** <https://github.com/ese5180/iot-venture-f25-chicken-nuggets#>
 
 ## Concept Development
 
@@ -100,7 +100,7 @@ Overview:
 
 We implemented Device Firmware Update (DFU) over UART . First, we enabled MCUboot as the secure bootloader and configured it for single-slot mode to support serial recovery. This allowed firmware updates through UART using tools like AuTerm and mcumgr, letting us reflash the board without using a debugger. We then extended the setup to support DFU from the application, switching to dual-slot mode so updates could be performed while the main app ran.
 
-Next, we added custom signing keys for MCUboot using imgtool.py to ensure only trusted firmware could be installed, replacing the default development key. Finally, we enabled external SPI flash as the secondary image slot, increasing available storage for larger applications. 
+Next, we added custom signing keys for MCUboot using imgtool.py to ensure only trusted firmware could be installed, replacing the default development key. Finally, we enabled external SPI flash as the secondary image slot, increasing available storage for larger applications.
 
 The bootloader occupies 32 KB of flash, from address 0x00000 – 0x07FFF. The application occupies roughly 1 MB of flash (0xF8000 bytes), from address 0x08000 – 0x0FFFFF. The application handles DFU via UART (MCUboot only verifies and swaps).
 
@@ -119,3 +119,82 @@ Wireless Communication:
 Our team explored several wireless communication options for firmware-over-the-air (FOTA) updates on the nRF7002 DK. Initially, we considered performing FOTA over LoRaWAN, since it aligns with the communication protocol used in our main project. However, after researching existing implementations and documentation, we found that LoRaWAN’s low data rate and payload size limitations make it impractical for large firmware transfers.
 
 Next, we experimented with Wi-Fi-based FOTA (exercise 7). We attempted to integrate cloud-based FOTA through Memfault and later AWS IoT, but both presented challenges — Memfault’s documentation was outdated for our SDK version, and AWS integration introduced code conflicts with our existing LoRaWAN stack. Currently, we are experimenting with Bluetooth Low Energy (BLE) FOTA. BLE offers a reliable and relatively lightweight communication channel for local updates and may proven easier to integrate with MCUboot compared to cloud-based Wi-Fi solutions.
+
+### MVP DEMO
+
+For our MVP demo, we have used several sensors and integrated many of the features required in order to make the full functionality of OpenDesk come together.
+
+The sensors used are:
+
+* PIR MOTION SENSOR (Seeed Technology Co., Ltd)
+* APDS-9960 Digital Proximity, Ambient Light, RGB and Gesture Sensor
+* SparkFun Human Presence and Motion Sensor - STHS34PF80 (Qwiic)
+
+The PIR motion sensor does not require a driver as it is a digital sensor. The RGB sensor had an example on Zephyr which we were able to adapt into a driver. The presence sensor had a driver we were able to use from ST Micro.
+
+The general workflow with the sensors is that the device is in an idle state until it recieves a wake command, triggered by motion detected by the PIR sensor. Then, the presence sensor is woken up to detect human presence, and if the device is configured for a single person space, the color sensor will be used to detect if it is a new person, or if the same person returned.
+
+We have got sensor readout from all sensors. The main factor now is tuning them (sensitivity, constants, etc), and then also porting this information over LoRA. Below is an image showing all the sensor readout.
+
+![alt text](image.png)
+
+![alt text](image-1.png)
+
+Regarding the MVP criteria, we fulfill the following:
+
+* At least two devices showing the functionality below
+  * We have 1 device with the full functionality of all sensors integrated, and 2 other devices with the MVP requirements (2 sensors + LoraWAN). We still need to wire up the remaining sensors on the other 2 devices.
+* Transmitting key data from the devices to a cloud server
+  * We have a reliable LoRaWAN connection that allows us to send sensor readings to TTN (for MVP), and will adjust this to send sensor data to an AWS server.
+* Demonstrating over-the-air firmware updates with signed images.
+  * We have sucessfully deployed FUOTA using AWS. We need to increase the speed of these updates, but we were able to deploy from the gateway and also recieve packets on the end device.
+* Showing the use of Git Hooks / CI pipelines to run unit tests.
+  * We have setup basic Git Hooks and have a CI pipeline to run unit tests.
+* Leveraging Memfault for managing devices.
+  * We have used Memfault's core dump and fleet management tools in our debugging process. We are doing our FOTA using AWS as it is easier for LoRaWAN deployment.
+* Demonstrating functionality and integration of your peripheral devices.
+  * We have a fully integrated device that transmits data using LoRaWAN, which we can demonstrate in the MVP.
+
+### Retrospective
+
+#### Successes
+
+Some things that we would consider a success for our project are:
+
+- LoRaWAN transport.
+  - We are able to reliably and consistently transmit our data over LoRaWAN. We ran into plenty of issues early on with our LoRa transceiver setup, but with the help of our peers, professor, and plenty of research, we were able to ge the wireless transmission system completely working.
+
+- Sensor readings.
+  - We are able to achieve reasonably accurate results for determining occupancy using our sensors. We also ran into some initial issues setting up communication with all the sensors in the system, especially since we have multiple devices on the same I2C bus and needed to deal with concurrency. However, we were able to abstract concurrency issues away with the use of Zephyr RTOS threads.
+
+- CI pipeline.
+  - We have a working CI pipeline that we can use to validate any code that we push to our repo.
+
+- Pitch and vision.
+  - We articulated our vision, technical details, market analysis, and pricing model clearly and fluently during our pitch. We were able to address many of our investors' questions and concerns. The goal and scope of our product is clear and simple.
+
+- Delegation of work and problem solving.
+  - We split up our tasks well, taking each of our members' strengths into account. We were able to assign a roughly equal amount of work to each member of our team. We problem solved well as a group, meeting frequently together to address any large issues we ran into.
+
+#### Areas for Improvement
+
+Some things that could've gone better while implementing our project are:
+
+- More defined test criteria.
+  - It would have been helpful to define what a successful product would have looked like before we started diving right in and implementing it. This would give us clear and concrete goals to move towards. If we had picked "checkpoints" or deliverable goals to move towards one at a time, we could have focused our efforts more clearly and moved faster.
+
+- FOTA.
+  - We ran into many issues while getting FOTA updates working. We tried two approaches:
+    - AWS IoT, over LoRa
+      - This ended up being our final solution. We weren't able to progress using this method until we had picked up a separate LoRa gateway than the one currently in Detkin. We struggled with unclear documentation, extremely slow iteration as LoRa OTAs take a long time to schedule and transmit, and unreliable transmission consistency (we would regularly lose about 50\% of our packets per OTA).
+    - Memfault, over Wi-Fi
+      - We tried this as an alternative solution when we were running into issues with LoRa FOTA updates. We constantly strugged with outdated documentation and code that didn't compile, excessive memory usage from the Wi-Fi stack on Zephyr, and conflicts with our existing LoRa stack. Debugging this took up much of our time that we wish was better spent on other features.
+
+- Integration.
+  - We had some trouble integrating our sensor systems and LoRa stack together, especially what data to transit and how often this would happen. It would have been helpful to start the integration process earlier so that we had more time to focus on polishing our solution.
+
+##### Development Approach
+
+
+##### System Design
+- We believe our wireless communication protocol was the right choice. Because we aim for our device to publish small, periodic summaries of data, the more heavyweight and battery-consuming Wi-Fi stack is unnecessary. In general, however, FOTA updates using LoRa are difficult to implement and ensure reliability for due to the protocol's small packet sizes.
