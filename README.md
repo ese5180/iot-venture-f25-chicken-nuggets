@@ -27,7 +27,8 @@ Some things that we would consider a success for our project are:
   - We are able to achieve reasonably accurate results for determining occupancy using our sensors. We also ran into some initial issues setting up communication with all the sensors in the system, especially since we have multiple devices on the same I2C bus and needed to deal with concurrency. However, we were able to abstract concurrency issues away with the use of Zephyr RTOS threads.
 
 - CI pipeline.
-  - We have a working CI pipeline that we can use to validate any code that we push to our repo.
+  - Each commit triggers local Git hooks and GitHub Actions that auto-format our code, compile the Zephyr firmware in a standardized Docker environment, and run our sensor/unit tests. This prevents broken builds and keeps the project stable as we add new features.
+  - When integrating sensors like the PIR module, the CI caught build failures, missing bindings, and formatting issues before code ever reached main, allowing our team to iterate quickly without regressions.
 
 - Pitch and vision.
   - We articulated our vision, technical details, market analysis, and pricing model clearly and fluently during our pitch. We were able to address many of our investors' questions and concerns. The goal and scope of our product is clear and simple.
