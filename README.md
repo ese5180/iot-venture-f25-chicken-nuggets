@@ -4,15 +4,17 @@
 
 ## ESE5180: IoT Wireless, Security, & Scaling
 
+**Website Link: [https://ese5180.github.io/iot-venture-f25-chicken-nuggets/]()**
+
 **Team Name: Chicken Nuggets**
 
-| Team Member Name | Email Address           |
-| ---------------- | ----------------------- |
-| Rohan Panday     | <rpanday@seas.upenn.edu>  |
-| Jason Li         | <jasonsli@seas.upenn.edu> |
-| Nandini Swami    | <snandini@seas.upenn.edu> |
+| Team Member Name | Email Address                                          |
+| ---------------- | ------------------------------------------------------ |
+| Rohan Panday     | [rpanday@seas.upenn.edu](mailto:rpanday@seas.upenn.edu)   |
+| Jason Li         | [jasonsli@seas.upenn.edu](mailto:jasonsli@seas.upenn.edu) |
+| Nandini Swami    | [snandini@seas.upenn.edu](mailto:snandini@seas.upenn.edu) |
 
-**GitHub Repository URL:** <https://github.com/ese5180/iot-venture-f25-chicken-nuggets#>
+**GitHub Repository URL:** [https://github.com/ese5180/iot-venture-f25-chicken-nuggets#](https://github.com/ese5180/iot-venture-f25-chicken-nuggets#)
 
 # Retrospective (Final Project Website Content)
 
@@ -21,19 +23,20 @@
 Some things that we would consider a success for our project are:
 
 - LoRaWAN transport.
+
   - We are able to reliably and consistently transmit our data over LoRaWAN. We ran into plenty of issues early on with our LoRa transceiver setup, but with the help of our peers, professor, and plenty of research, we were able to ge the wireless transmission system completely working.
-
 - Sensor readings.
-  - We are able to achieve reasonably accurate results for determining occupancy using our sensors. We also ran into some initial issues setting up communication with all the sensors in the system, especially since we have multiple devices on the same I2C bus and needed to deal with concurrency. However, we were able to abstract concurrency issues away with the use of Zephyr RTOS threads.
 
+  - We are able to achieve reasonably accurate results for determining occupancy using our sensors. We also ran into some initial issues setting up communication with all the sensors in the system, especially since we have multiple devices on the same I2C bus and needed to deal with concurrency. However, we were able to abstract concurrency issues away with the use of Zephyr RTOS threads.
 - CI pipeline.
+
   - Each commit triggers local Git hooks and GitHub Actions that auto-format our code, compile the Zephyr firmware in a standardized Docker environment, and run our sensor/unit tests. This prevents broken builds and keeps the project stable as we add new features.
   - When integrating sensors like the PIR module, the CI caught build failures, missing bindings, and formatting issues before code ever reached main, allowing our team to iterate quickly without regressions.
-
 - Pitch and vision.
-  - We articulated our vision, technical details, market analysis, and pricing model clearly and fluently during our pitch. We were able to address many of our investors' questions and concerns. The goal and scope of our product is clear and simple.
 
+  - We articulated our vision, technical details, market analysis, and pricing model clearly and fluently during our pitch. We were able to address many of our investors' questions and concerns. The goal and scope of our product is clear and simple.
 - Delegation of work and problem solving.
+
   - We split up our tasks well, taking each of our members' strengths into account. We were able to assign a roughly equal amount of work to each member of our team. We problem solved well as a group, meeting frequently together to address any large issues we ran into.
 
 ## Areas for Improvement
@@ -41,28 +44,25 @@ Some things that we would consider a success for our project are:
 Some things that could've gone better while implementing our project are:
 
 - More defined test criteria.
-  - It would have been helpful to define what a successful product would have looked like before we started diving right in and implementing it. This would give us clear and concrete goals to move towards. If we had picked "checkpoints" or deliverable goals to move towards one at a time, we could have focused our efforts more clearly and moved faster.
 
+  - It would have been helpful to define what a successful product would have looked like before we started diving right in and implementing it. This would give us clear and concrete goals to move towards. If we had picked "checkpoints" or deliverable goals to move towards one at a time, we could have focused our efforts more clearly and moved faster.
 - FOTA.
+
   - We ran into many issues while getting FOTA updates working. We tried two approaches:
     - AWS IoT, over LoRa
       - This ended up being our final solution. We weren't able to progress using this method until we had picked up a separate LoRa gateway than the one currently in Detkin (our one is AWS enabled). We struggled with unclear documentation, extremely slow iteration as LoRa OTAs take a long time to schedule and transmit, and unreliable transmission consistency (we would regularly lose about 50\% of our packets per OTA).
     - Memfault, over Wi-Fi
       - We tried this as an alternative solution when we were running into issues with LoRa FOTA updates. We constantly strugged with outdated documentation and code that didn't compile, excessive memory usage from the Wi-Fi stack on Zephyr, and conflicts with our existing LoRa stack. Debugging this took up much of our time that we wish was better spent on other features.
-
 - Integration.
+
   - We had some trouble integrating our sensor systems and LoRa stack together, especially what data to transit and how often this would happen. It would have been helpful to start the integration process earlier so that we had more time to focus on polishing our solution.
 
 ## Development Approach
 
 - We would start iterating with the sensors much earlier. We spent a large portion of the project focusing on LoRa communication and FUOTA, which were core goals of the class and technically challenging in their own right. While that focus made sense, it delayed work with the sensors themselves. Beginning sensor integration earlier would have exposed some of the practical issues sooner (such as the difficulty in getting useful readings from the color sensors).
-
 - We would define the product use case more clearly from the start. Early on, we were not very specific about how the sensor would be mounted, what types of spaces it was intended for, or how different operating modes and thresholds should behave in software. That ambiguity made some development decisions feel speculative and led to rework later. A clearer, more concrete use case up front would have helped us prioritize features, tune parameters earlier, and make more confident design tradeoffs.
-
 - We would invest more effort into building a robust physical setup earlier in the project. Loose jumper wires and fragile connections on the breadboard setup caused intermittent issues that slowed debugging and made it harder to distinguish software bugs from hardware problems. Even a simple mechanical enclosure or semi-permanent wiring solution would have saved time and reduced issues during testing and iteration.
-
 - We would make our software design easier to integrate into a final project. While the thread setup was very beneficial in terms of creating a simple and readable codebase, it caused some issues downstream in terms of thread priority as well as integrations issues in terms of writing sensor readings from different threads into the LoRaWAN buffer. A system designed around the LoRaWAN transmission would have likely helped mitigate these issues.
-
 - We would aim for more incremental, end-to-end milestones rather than large feature blocks. Getting a minimal “vertical slice” working early (sensor → processing → wireless → backend) would have made progress more visible and helped catch integration issues sooner. We would also budget more time for validation and characterization, rather than treating testing as something that happens mainly at the end.
 
 ## System Design
@@ -95,7 +95,7 @@ From discussions with our stakeholders, we found that feedback aligned well with
 
 ## Demo Video
 
-https://drive.google.com/file/d/17ez-gkpR8DzECIH_EURgsrd-JFPmvyVv/view?usp=sharing 
+https://drive.google.com/file/d/17ez-gkpR8DzECIH_EURgsrd-JFPmvyVv/view?usp=sharing
 
 # Concept Development (Previous ReadMe Submissions/Development)
 
